@@ -12,7 +12,7 @@ const GitHubIcon = () => (
 
 // External link icon SVG
 const ExternalLinkIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '4px' }}>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '4px' }}>
     <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
@@ -199,7 +199,7 @@ const NestedDropdownContainer = styled.div`
 const NestedDropdownButton = styled.button`
   color: ${theme.colors.text};
   font-weight: 500;
-  font-size: ${theme.fontSizes.xl};
+  font-size: ${theme.fontSizes.lg};
   background: none;
   border: none;
   cursor: pointer;
