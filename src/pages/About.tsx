@@ -296,9 +296,6 @@ const About: React.FC = () => {
             <li>
               <strong>GitHub Issues:</strong> <a href="https://github.com/BryantWelch/controller-test.app/issues" target="_blank" rel="noopener noreferrer">Report bugs or request features</a>
             </li>
-            <li>
-              <strong>Email:</strong> <a href="mailto:contact@controller-test.app">contact@controller-test.app</a>
-            </li>
           </ul>
           <p>
             If you find this tool helpful, consider supporting the project:

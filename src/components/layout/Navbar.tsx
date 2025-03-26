@@ -277,6 +277,7 @@ const Navbar: React.FC = () => {
     <NavbarContainer isScrolled={isScrolled}>
       <NavbarLeft>
         <Logo to="/">Controller Test</Logo>
+        <NavLink to="/about">About</NavLink>
         
         <NavLinks>
           <DropdownContainer>
@@ -334,25 +335,32 @@ const Navbar: React.FC = () => {
                 </NestedDropdownButton>
                 <NestedDropdownContent>
                   <DropdownLink 
-                    href="https://www.amazon.com/Xbox-Wireless-Controller-Carbon-Black/dp/B08DF248LD" 
+                    href="https://amzn.to/3XtBE5u" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
-                    <span>Xbox Series X Controller</span> <ExternalLinkIcon />
+                    <span>Xbox Series Controller</span> <ExternalLinkIcon />
                   </DropdownLink>
                   <DropdownLink 
-                    href="https://www.amazon.com/Xbox-Wireless-Controller-Robot-White/dp/B08DFB488B" 
+                    href="https://amzn.to/4jaeWaV" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
                     <span>Xbox Elite Controller</span> <ExternalLinkIcon />
                   </DropdownLink>
                   <DropdownLink 
-                    href="https://www.amazon.com/Xbox-One-Wireless-Controller-Black/dp/B01LPZM7VI" 
+                    href="https://amzn.to/42gzPvg" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
                     <span>Xbox One Controller</span> <ExternalLinkIcon />
+                  </DropdownLink>
+                  <DropdownLink 
+                    href="https://amzn.to/4hPqU8S" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    <span>Xbox Elite 2 Controller</span> <ExternalLinkIcon />
                   </DropdownLink>
                 </NestedDropdownContent>
               </NestedDropdownContainer>
@@ -373,21 +381,21 @@ const Navbar: React.FC = () => {
                 </NestedDropdownButton>
                 <NestedDropdownContent>
                   <DropdownLink 
-                    href="https://www.amazon.com/DualSense-Wireless-Controller-PlayStation-5/dp/B08FC6C75Y" 
+                    href="https://amzn.to/3Xw58zz" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
                     <span>PS5 DualSense Controller</span> <ExternalLinkIcon />
                   </DropdownLink>
                   <DropdownLink 
-                    href="https://www.amazon.com/DualShock-Wireless-Controller-PlayStation-Black-4/dp/B01LWVX2RG" 
+                    href="https://amzn.to/3QPlwaI" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
                     <span>PS4 DualShock Controller</span> <ExternalLinkIcon />
                   </DropdownLink>
                   <DropdownLink 
-                    href="https://www.amazon.com/DualSense-Edge-Wireless-Controller-PlayStation-5/dp/B0BG3WD45D" 
+                    href="https://amzn.to/3XAI5nk" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
@@ -412,25 +420,25 @@ const Navbar: React.FC = () => {
                 </NestedDropdownButton>
                 <NestedDropdownContent>
                   <DropdownLink 
-                    href="https://www.amazon.com/Nintendo-Switch-Pro-Controller/dp/B01NAWKYZ0" 
+                    href="https://amzn.to/3DJwStY" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
                     <span>Switch Pro Controller</span> <ExternalLinkIcon />
                   </DropdownLink>
                   <DropdownLink 
-                    href="https://www.amazon.com/Nintendo-Joy-Neon-Red-Blue-switch/dp/B01N6QJ58Y" 
+                    href="https://amzn.to/4hRxpaV" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
                     <span>Switch Joy-Cons</span> <ExternalLinkIcon />
                   </DropdownLink>
                   <DropdownLink 
-                    href="https://www.amazon.com/PowerA-Enhanced-Wireless-Controller-Nintendo-Switch/dp/B07GXKCX6Y" 
+                    href="https://amzn.to/3Y3edA0" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
-                    <span>PowerA Enhanced Wireless</span> <ExternalLinkIcon />
+                    <span>Hori Split Pad Pro</span> <ExternalLinkIcon />
                   </DropdownLink>
                 </NestedDropdownContent>
               </NestedDropdownContainer>
