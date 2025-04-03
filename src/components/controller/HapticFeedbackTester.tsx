@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { GamepadState } from '../../hooks/useGamepad';
@@ -31,6 +31,16 @@ const NotSupportedMessage = styled.div`
   padding: ${theme.space.md};
   margin-bottom: ${theme.space.lg};
   color: ${theme.colors.text};
+`;
+
+const FeedbackMessage = styled.div<{ success: boolean }>`
+  background-color: ${props => props.success ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)'};
+  border-left: 4px solid ${props => props.success ? '#4CAF50' : '#F44336'};
+  padding: ${theme.space.md};
+  margin-bottom: ${theme.space.lg};
+  color: ${theme.colors.text};
+  transition: opacity 0.3s ease;
+  opacity: 1;
 `;
 
 const ControlsGrid = styled.div`
@@ -195,8 +205,31 @@ const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({
     }
   ];
   
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [feedbackSuccess, setFeedbackSuccess] = useState(false);
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
+  
+  useEffect(() => {
+    if (feedbackVisible) {
+      const timer = setTimeout(() => {
+        setFeedbackVisible(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [feedbackVisible]);
+
   const handleTriggerHaptic = () => {
-    triggerHapticFeedback(duration, strongMagnitude, weakMagnitude);
+    const result = triggerHapticFeedback(duration, strongMagnitude, weakMagnitude);
+    
+    if (result) {
+      setFeedbackMessage('Haptic feedback successfully triggered!');
+      setFeedbackSuccess(true);
+    } else {
+      setFeedbackMessage('Failed to trigger haptic feedback. Your browser or controller may not support this feature.');
+      setFeedbackSuccess(false);
+    }
+    
+    setFeedbackVisible(true);
   };
   
   const playHapticPattern = async (pattern: HapticPattern) => {
@@ -234,8 +267,21 @@ const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({
     <HapticContainer>
       <HapticTitle>Haptic Feedback Tester</HapticTitle>
       <HapticDescription>
-        Test your controller's vibration capabilities. Adjust the sliders to customize the intensity and duration of the haptic feedback.
+        Test the vibration capabilities of your controller by adjusting the parameters below.
       </HapticDescription>
+      
+      {!isSupported && (
+        <NotSupportedMessage>
+          Your controller may not support haptic feedback or your browser may not fully support the Gamepad Haptic Actuator API.
+          We'll still try to use any available vibration methods.
+        </NotSupportedMessage>
+      )}
+      
+      {feedbackVisible && (
+        <FeedbackMessage success={feedbackSuccess}>
+          {feedbackMessage}
+        </FeedbackMessage>
+      )}
       
       <ControlsGrid>
         <ControlGroup>

@@ -557,22 +557,50 @@ export const useGamepad = (deadzone: number = 0.05) => {
     strongMagnitude: number = 1.0,
     weakMagnitude: number = 1.0
   ): boolean => {
-    if (!activeGamepad || !activeGamepad.hapticCapabilities.supported) {
+    if (!activeGamepad) {
       return false;
     }
 
     try {
-      // Use the actuator if available
-      if (activeGamepad.hapticCapabilities.actuator) {
-        const actuator = activeGamepad.hapticCapabilities.actuator;
-        // Use type assertion to handle the pulse method
-        (actuator as any).pulse(strongMagnitude, weakMagnitude, duration);
+      // Method 1: Try the standard vibrationActuator API (Chrome, Edge)
+      if ((activeGamepad as any).vibrationActuator && 
+          typeof (activeGamepad as any).vibrationActuator.playEffect === 'function') {
+        (activeGamepad as any).vibrationActuator.playEffect('dual-rumble', {
+          startDelay: 0,
+          duration: duration,
+          weakMagnitude: weakMagnitude,
+          strongMagnitude: strongMagnitude
+        });
+        return true;
       }
+      
+      // Method 2: Try the GamepadHapticActuator API (Firefox)
+      if (activeGamepad.hapticCapabilities && activeGamepad.hapticCapabilities.supported) {
+        if (activeGamepad.hapticCapabilities.actuator) {
+          const actuator = activeGamepad.hapticCapabilities.actuator;
+          if (typeof (actuator as any).pulse === 'function') {
+            (actuator as any).pulse(strongMagnitude, weakMagnitude, duration);
+            return true;
+          }
+        }
+      }
+      
+      // Method 3: Try direct access to haptic actuators array (some implementations)
+      const gamepad = navigator.getGamepads()[activeGamepad.index];
+      if (gamepad && (gamepad as any).hapticActuators && (gamepad as any).hapticActuators.length > 0) {
+        const actuator = (gamepad as any).hapticActuators[0];
+        if (typeof actuator.pulse === 'function') {
+          actuator.pulse(strongMagnitude, weakMagnitude, duration);
+          return true;
+        }
+      }
+      
+      console.log('No compatible haptic feedback method found for this browser/controller');
+      return false;
     } catch (error) {
       console.error('Error triggering haptic feedback:', error);
+      return false;
     }
-    
-    return false;
   };
 
   // Update deadzone settings
