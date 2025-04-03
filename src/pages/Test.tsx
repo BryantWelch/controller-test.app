@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGamepad } from '../hooks/useGamepad';
 import { theme } from '../styles/theme';
 import ControllerDisplay from '../components/controller/ControllerDisplay';
+import ControllerModelVisualizer from '../components/controller/ControllerModelVisualizer';
+import HapticFeedbackTester from '../components/controller/HapticFeedbackTester';
+import AdvancedDiagnostics from '../components/controller/AdvancedDiagnostics';
+import ControllerProfileManager from '../components/controller/ControllerProfileManager';
+import ControllerIdentifierTest from '../components/controller/ControllerIdentifierTest';
 
 const TestContainer = styled.div`
   display: flex;
@@ -50,17 +55,17 @@ const NoControllerIcon = styled.div`
   color: ${theme.colors.accent};
 `;
 
-const NoControllerTitle = styled.h2`
+const NoControllerTitle = styled.h3`
   font-size: ${theme.fontSizes.xl};
   margin-bottom: ${theme.space.md};
   color: ${theme.colors.primary};
 `;
 
 const NoControllerText = styled.p`
-  color: ${theme.colors.text};
+  font-size: ${theme.fontSizes.md};
   text-align: center;
-  line-height: 1.6;
   margin-bottom: ${theme.space.lg};
+  color: ${theme.colors.text};
 `;
 
 const StepsList = styled.ol`
@@ -91,7 +96,9 @@ const ControllerInfo = styled.div`
   border-radius: ${theme.borderRadius.md};
   padding: ${theme.space.lg};
   width: 100%;
-  max-width: 600px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
 `;
 
 const ControllerName = styled.h2`
@@ -100,11 +107,16 @@ const ControllerName = styled.h2`
   margin-bottom: ${theme.space.md};
 `;
 
+const ControllerType = styled.div`
+  font-size: ${theme.fontSizes.sm};
+  color: ${theme.colors.textDark};
+`;
+
 const ControllerDetails = styled.div`
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-around;
-  width: 100%;
+  gap: ${theme.space.sm};
+  margin-bottom: ${theme.space.md};
 `;
 
 const DetailItem = styled.div`
@@ -123,75 +135,275 @@ const DetailLabel = styled.div`
 const DetailValue = styled.div`
   font-size: ${theme.fontSizes.md};
   color: ${theme.colors.text};
-  font-weight: 600;
 `;
 
-const DiagnosticsButton = styled(motion.button)`
-  background-color: ${theme.colors.secondary};
-  color: ${theme.colors.text};
-  font-size: ${theme.fontSizes.md};
-  font-weight: 600;
-  padding: ${theme.space.sm} ${theme.space.lg};
+const ControllerDetailsCard = styled.div`
+  background-color: ${theme.colors.backgroundDark};
   border-radius: ${theme.borderRadius.md};
-  border: none;
-  cursor: pointer;
-  box-shadow: ${theme.shadows.sm};
+  padding: ${theme.space.lg};
   margin-top: ${theme.space.lg};
+  margin-bottom: ${theme.space.lg};
+  width: 100%;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const ControllerDetailRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: ${theme.space.sm};
+  padding-bottom: ${theme.space.sm};
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   
-  &:hover {
-    background-color: ${theme.colors.secondaryLight};
+  &:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
   }
 `;
 
-const DiagnosticsPanel = styled(motion.div)`
-  background-color: ${theme.colors.backgroundLight};
-  border-radius: ${theme.borderRadius.md};
-  padding: ${theme.space.lg};
-  margin-top: ${theme.space.xl};
-  width: 100%;
-  overflow-x: auto;
+const ControllerDetailLabel = styled.div`
+  font-size: ${theme.fontSizes.sm};
+  color: ${theme.colors.primary};
+  font-weight: 600;
 `;
 
-const DiagnosticsTitle = styled.h3`
-  font-size: ${theme.fontSizes.lg};
+const ControllerDetailValue = styled.div`
+  font-size: ${theme.fontSizes.sm};
+  color: ${theme.colors.text};
+  text-align: right;
+  word-break: break-word;
+  max-width: 60%;
+`;
+
+const ControllerDetailFeatures = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: ${theme.space.xs};
+`;
+
+const FeatureTag = styled.span`
+  background-color: rgba(125, 252, 189, 0.2);
   color: ${theme.colors.primary};
+  padding: ${theme.space.xs} ${theme.space.sm};
+  border-radius: ${theme.borderRadius.sm};
+  font-size: ${theme.fontSizes.xs};
+  font-weight: 600;
+`;
+
+const BrowserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: ${theme.space.md};
+  padding: ${theme.space.sm} ${theme.space.md};
+  background-color: ${theme.colors.backgroundDark};
+  border-radius: ${theme.borderRadius.md};
+`;
+
+const BrowserIcon = styled.div`
+  font-size: ${theme.fontSizes.lg};
+  margin-right: ${theme.space.sm};
+`;
+
+const BrowserText = styled.div`
+  font-size: ${theme.fontSizes.sm};
+  color: ${theme.colors.text};
+`;
+
+const BrowserCompatibility = styled.div<{ isSupported: boolean }>`
+  display: inline-block;
+  margin-left: ${theme.space.sm};
+  padding: ${theme.space.xs} ${theme.space.sm};
+  border-radius: ${theme.borderRadius.sm};
+  font-size: ${theme.fontSizes.xs};
+  background-color: ${props => props.isSupported ? 'rgba(125, 252, 189, 0.2)' : 'rgba(244, 67, 54, 0.2)'};
+  color: ${props => props.isSupported ? theme.colors.primary : '#F44336'};
+`;
+
+const SectionContainer = styled.div`
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: ${theme.space.xl};
+`;
+
+const SectionTitle = styled.h3`
+  color: ${theme.colors.primary};
+  font-size: ${theme.fontSizes.lg};
+  margin-bottom: ${theme.space.md};
+  padding-bottom: ${theme.space.sm};
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const TabsContainer = styled.div`
+  display: flex;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: ${theme.space.lg};
+  justify-content: center;
+  flex-wrap: wrap;
+`;
+
+const Tab = styled.button<{ active: boolean }>`
+  background: none;
+  border: none;
+  padding: ${theme.space.sm} ${theme.space.md};
+  color: ${props => props.active ? theme.colors.primary : theme.colors.textDark};
+  font-size: ${theme.fontSizes.md};
+  font-weight: ${props => props.active ? '600' : '400'};
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: ${props => props.active ? theme.colors.primary : 'transparent'};
+  }
+  
+  &:hover {
+    color: ${theme.colors.primary};
+  }
+`;
+
+const ExportButton = styled(motion.button)`
+  background-color: ${theme.colors.backgroundLight};
+  color: ${theme.colors.text};
+  border: none;
+  border-radius: ${theme.borderRadius.md};
+  padding: ${theme.space.sm} ${theme.space.md};
+  font-size: ${theme.fontSizes.sm};
+  display: flex;
+  align-items: center;
+  gap: ${theme.space.xs};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: ${theme.colors.primary};
+    color: ${theme.colors.backgroundDark};
+  }
+`;
+
+const ExportButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: ${theme.space.lg};
+  width: 100%;
+`;
+
+const ExportIcon = styled.span`
+  font-size: ${theme.fontSizes.md};
+`;
+
+const WarningIcon = styled.div`
+  font-size: 3rem;
   margin-bottom: ${theme.space.md};
 `;
 
-const DiagnosticsTable = styled.table`
+const BrowserName = styled.span`
+  font-weight: bold;
+`;
+
+const BrowserSupport = styled.span<{ supported: boolean }>`
+  margin-left: ${theme.space.sm};
+  color: ${props => props.supported ? theme.colors.primary : theme.colors.secondary};
+`;
+
+const ControllerHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   width: 100%;
-  border-collapse: collapse;
+  margin-bottom: ${theme.space.md};
 `;
 
-const TableHead = styled.thead`
-  background-color: ${theme.colors.backgroundDark};
+const TabContent = styled(motion.div)`
+  width: 100%;
+  padding: ${theme.space.md};
 `;
 
-const TableRow = styled.tr`
-  border-bottom: 1px solid ${theme.colors.backgroundDark};
-  
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const TableHeader = styled.th`
-  padding: ${theme.space.sm};
-  text-align: left;
-  color: ${theme.colors.primary};
-`;
-
-const TableCell = styled.td`
-  padding: ${theme.space.sm};
-  color: ${theme.colors.text};
-`;
+type TabType = 'visualization' | 'diagnostics' | 'haptic' | 'profiles' | 'identifier';
 
 const Test: React.FC = () => {
-  const { activeGamepad, isSupported } = useGamepad();
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const { 
+    gamepads, 
+    activeGamepad, 
+    isSupported,
+    browserInfo,
+    updateDeadZones,
+    triggerHapticFeedback
+  } = useGamepad();
   
-  const toggleDiagnostics = () => {
-    setShowDiagnostics(!showDiagnostics);
+  const [activeTab, setActiveTab] = useState<TabType>('visualization');
+  
+  // Function to export controller data
+  const exportControllerData = () => {
+    if (!activeGamepad) return;
+    
+    // Create a formatted JSON object with controller data
+    const exportData = {
+      controller: {
+        id: activeGamepad.id,
+        type: activeGamepad.type,
+        mapping: activeGamepad.mapping,
+        model: activeGamepad.modelInfo ? activeGamepad.modelInfo.name : 'Unknown',
+        manufacturer: activeGamepad.modelInfo ? activeGamepad.modelInfo.manufacturer : 'Unknown',
+      },
+      buttons: activeGamepad.buttons.map((button, index) => ({
+        index,
+        pressed: button.pressed,
+        value: button.value
+      })),
+      axes: activeGamepad.axes.map((axis, index) => ({
+        index,
+        value: axis
+      })),
+      stickDrift: activeGamepad.stickDrift,
+      diagnostics: {
+        pollingRate: activeGamepad.pollingData.rate,
+        latency: activeGamepad.latencyData.averageLatency,
+        browser: `${activeGamepad.browserCompatibility.name} ${activeGamepad.browserCompatibility.version}`
+      },
+      timestamp: new Date().toISOString()
+    };
+    
+    // Convert to a JSON string with pretty formatting
+    const jsonString = JSON.stringify(exportData, null, 2);
+    
+    // Create a blob and download link
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `controller-data-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  };
+  
+  // Function to handle loading a profile
+  const handleLoadProfile = (profile: any) => {
+    if (profile && profile.deadZones) {
+      const leftDeadZone = typeof profile.deadZones.leftStick === 'string' 
+        ? parseFloat(profile.deadZones.leftStick) 
+        : profile.deadZones.leftStick;
+        
+      const rightDeadZone = typeof profile.deadZones.rightStick === 'string' 
+        ? parseFloat(profile.deadZones.rightStick) 
+        : profile.deadZones.rightStick;
+        
+      updateDeadZones(leftDeadZone, rightDeadZone);
+    }
   };
   
   if (!isSupported) {
@@ -209,7 +421,7 @@ const Test: React.FC = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <NoControllerIcon>⚠️</NoControllerIcon>
+          <WarningIcon>⚠️</WarningIcon>
           <NoControllerTitle>Gamepad API Not Supported</NoControllerTitle>
           <NoControllerText>
             Your browser doesn't support the Gamepad API, which is required to test controllers.
@@ -257,6 +469,16 @@ const Test: React.FC = () => {
           <NoControllerText>
             Once connected, your controller should be automatically detected and displayed here.
           </NoControllerText>
+          
+          <BrowserInfo>
+            <BrowserIcon>🌐</BrowserIcon>
+            <BrowserText>
+              Browser: {browserInfo.name} {browserInfo.version}
+              <BrowserCompatibility isSupported={browserInfo.fullSupport}>
+                {browserInfo.fullSupport ? 'Fully Supported' : 'Limited Support'}
+              </BrowserCompatibility>
+            </BrowserText>
+          </BrowserInfo>
         </NoControllerMessage>
       </TestContainer>
     );
@@ -272,128 +494,215 @@ const Test: React.FC = () => {
         Controller Test
       </Title>
       <Subtitle
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        Press buttons or move sticks to test your controller
+        Test your gamepad's buttons, sticks, and triggers. Diagnose issues like stick drift and input latency.
       </Subtitle>
       
-      <ControllerSection
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <ControllerInfo>
-          <ControllerName>{activeGamepad.id}</ControllerName>
-          <ControllerDetails>
-            <DetailItem>
-              <DetailLabel>Type</DetailLabel>
-              <DetailValue>{activeGamepad.type}</DetailValue>
-            </DetailItem>
-            <DetailItem>
-              <DetailLabel>Buttons</DetailLabel>
-              <DetailValue>{activeGamepad.buttons.length}</DetailValue>
-            </DetailItem>
-            <DetailItem>
-              <DetailLabel>Axes</DetailLabel>
-              <DetailValue>{activeGamepad.axes.length}</DetailValue>
-            </DetailItem>
-            <DetailItem>
-              <DetailLabel>Mapping</DetailLabel>
-              <DetailValue>{activeGamepad.mapping || 'Custom'}</DetailValue>
-            </DetailItem>
-          </ControllerDetails>
+      {!isSupported && (
+        <NoControllerMessage
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <WarningIcon>⚠️</WarningIcon>
+          <NoControllerTitle>Gamepad API Not Supported</NoControllerTitle>
+          <NoControllerText>
+            Your browser doesn't support the Gamepad API. Please try using a modern browser like Chrome, Edge, or Firefox.
+          </NoControllerText>
+        </NoControllerMessage>
+      )}
+      
+      {isSupported && !activeGamepad && (
+        <NoControllerMessage
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <WarningIcon>🎮</WarningIcon>
+          <NoControllerTitle>No Controller Detected</NoControllerTitle>
+          <NoControllerText>
+            Connect a controller and press any button to activate it.
+          </NoControllerText>
+          <BrowserInfo>
+            <BrowserName>{browserInfo.name} {browserInfo.version}</BrowserName>
+            <BrowserSupport supported={browserInfo.fullSupport}>
+              {browserInfo.fullSupport ? 'Full Support' : 'Limited Support'}
+            </BrowserSupport>
+          </BrowserInfo>
+        </NoControllerMessage>
+      )}
+      
+      {isSupported && activeGamepad && (
+        <ControllerSection
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <ControllerHeader>
+            <ControllerInfo>
+              <ControllerName>
+                {activeGamepad.modelInfo ? activeGamepad.modelInfo.name : 'Generic Controller'}
+              </ControllerName>
+              <ControllerType>
+                {activeGamepad.modelInfo ? activeGamepad.modelInfo.manufacturer : activeGamepad.type}
+              </ControllerType>
+            </ControllerInfo>
+          </ControllerHeader>
           
-          <DiagnosticsButton
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleDiagnostics}
-          >
-            {showDiagnostics ? 'Hide Diagnostics' : 'Show Diagnostics'}
-          </DiagnosticsButton>
-        </ControllerInfo>
-        
-        <ControllerDisplay gamepad={activeGamepad} />
-        
-        {showDiagnostics && (
-          <DiagnosticsPanel
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <DiagnosticsTitle>Diagnostics</DiagnosticsTitle>
-            
-            <DiagnosticsTable>
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Button</TableHeader>
-                  <TableHeader>Pressed</TableHeader>
-                  <TableHeader>Value</TableHeader>
-                </TableRow>
-              </TableHead>
-              <tbody>
-                {activeGamepad.buttons.map((button, index) => (
-                  <TableRow key={`button-${index}`}>
-                    <TableCell>Button {index}</TableCell>
-                    <TableCell>{button.pressed ? 'Yes' : 'No'}</TableCell>
-                    <TableCell>{button.value.toFixed(4)}</TableCell>
-                  </TableRow>
-                ))}
-              </tbody>
-            </DiagnosticsTable>
-            
-            <DiagnosticsTitle style={{ marginTop: theme.space.lg }}>Axes</DiagnosticsTitle>
-            <DiagnosticsTable>
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Axis</TableHeader>
-                  <TableHeader>Value</TableHeader>
-                </TableRow>
-              </TableHead>
-              <tbody>
-                {activeGamepad.axes.map((axis, index) => (
-                  <TableRow key={`axis-${index}`}>
-                    <TableCell>Axis {index}</TableCell>
-                    <TableCell>{axis.toFixed(4)}</TableCell>
-                  </TableRow>
-                ))}
-              </tbody>
-            </DiagnosticsTable>
-            
-            {(activeGamepad.stickDrift.leftStick.detected || activeGamepad.stickDrift.rightStick.detected) && (
-              <>
-                <DiagnosticsTitle style={{ marginTop: theme.space.lg }}>Stick Drift Analysis</DiagnosticsTitle>
-                <DiagnosticsTable>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeader>Stick</TableHeader>
-                      <TableHeader>Drift Detected</TableHeader>
-                      <TableHeader>X Offset</TableHeader>
-                      <TableHeader>Y Offset</TableHeader>
-                    </TableRow>
-                  </TableHead>
-                  <tbody>
-                    <TableRow>
-                      <TableCell>Left Stick</TableCell>
-                      <TableCell>{activeGamepad.stickDrift.leftStick.detected ? 'Yes' : 'No'}</TableCell>
-                      <TableCell>{activeGamepad.stickDrift.leftStick.value.x.toFixed(4)}</TableCell>
-                      <TableCell>{activeGamepad.stickDrift.leftStick.value.y.toFixed(4)}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Right Stick</TableCell>
-                      <TableCell>{activeGamepad.stickDrift.rightStick.detected ? 'Yes' : 'No'}</TableCell>
-                      <TableCell>{activeGamepad.stickDrift.rightStick.value.x.toFixed(4)}</TableCell>
-                      <TableCell>{activeGamepad.stickDrift.rightStick.value.y.toFixed(4)}</TableCell>
-                    </TableRow>
-                  </tbody>
-                </DiagnosticsTable>
-              </>
+          <TabsContainer>
+            <Tab 
+              active={activeTab === 'visualization'} 
+              onClick={() => setActiveTab('visualization')}
+            >
+              Visualization
+            </Tab>
+            <Tab 
+              active={activeTab === 'diagnostics'} 
+              onClick={() => setActiveTab('diagnostics')}
+            >
+              Diagnostics
+            </Tab>
+            <Tab 
+              active={activeTab === 'haptic'} 
+              onClick={() => setActiveTab('haptic')}
+            >
+              Haptic Feedback
+            </Tab>
+            <Tab 
+              active={activeTab === 'profiles'} 
+              onClick={() => setActiveTab('profiles')}
+            >
+              Profiles
+            </Tab>
+            <Tab 
+              active={activeTab === 'identifier'} 
+              onClick={() => setActiveTab('identifier')}
+            >
+              Identifier
+            </Tab>
+          </TabsContainer>
+          
+          <AnimatePresence mode="wait">
+            {activeTab === 'visualization' && (
+              <TabContent
+                key="visualization"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ControllerDisplay gamepad={activeGamepad} />
+                
+                <ControllerDetailsCard>
+                  <ControllerDetailRow>
+                    <ControllerDetailLabel>Model</ControllerDetailLabel>
+                    <ControllerDetailValue>
+                      {activeGamepad.modelInfo ? activeGamepad.modelInfo.name : 'Generic Controller'}
+                    </ControllerDetailValue>
+                  </ControllerDetailRow>
+                  
+                  <ControllerDetailRow>
+                    <ControllerDetailLabel>Manufacturer</ControllerDetailLabel>
+                    <ControllerDetailValue>
+                      {activeGamepad.modelInfo ? activeGamepad.modelInfo.manufacturer : 'Unknown'}
+                    </ControllerDetailValue>
+                  </ControllerDetailRow>
+                  
+                  <ControllerDetailRow>
+                    <ControllerDetailLabel>Controller ID</ControllerDetailLabel>
+                    <ControllerDetailValue>{activeGamepad.id}</ControllerDetailValue>
+                  </ControllerDetailRow>
+                  
+                  <ControllerDetailRow>
+                    <ControllerDetailLabel>Mapping</ControllerDetailLabel>
+                    <ControllerDetailValue>{activeGamepad.mapping}</ControllerDetailValue>
+                  </ControllerDetailRow>
+                  
+                  <ControllerDetailRow>
+                    <ControllerDetailLabel>Features</ControllerDetailLabel>
+                    <ControllerDetailFeatures>
+                      <FeatureTag>Wireless</FeatureTag>
+                      {activeGamepad.hapticCapabilities.supported && (
+                        <FeatureTag>Vibration Feedback</FeatureTag>
+                      )}
+                    </ControllerDetailFeatures>
+                  </ControllerDetailRow>
+                </ControllerDetailsCard>
+              </TabContent>
             )}
-          </DiagnosticsPanel>
-        )}
-      </ControllerSection>
+            
+            {activeTab === 'diagnostics' && (
+              <TabContent
+                key="diagnostics"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AdvancedDiagnostics 
+                  gamepad={activeGamepad}
+                  updateDeadZones={updateDeadZones}
+                />
+              </TabContent>
+            )}
+            
+            {activeTab === 'haptic' && (
+              <TabContent
+                key="haptic"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <HapticFeedbackTester 
+                  gamepad={activeGamepad}
+                  triggerHapticFeedback={triggerHapticFeedback}
+                />
+              </TabContent>
+            )}
+            
+            {activeTab === 'profiles' && (
+              <TabContent
+                key="profiles"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ControllerProfileManager 
+                  gamepad={activeGamepad}
+                  onLoadProfile={handleLoadProfile}
+                />
+              </TabContent>
+            )}
+            
+            {activeTab === 'identifier' && (
+              <TabContent
+                key="identifier"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ControllerIdentifierTest />
+              </TabContent>
+            )}
+          </AnimatePresence>
+          
+          <ExportButtonContainer>
+            <ExportButton 
+              onClick={exportControllerData}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ExportIcon>📊</ExportIcon> Export Controller Data
+            </ExportButton>
+          </ExportButtonContainer>
+        </ControllerSection>
+      )}
     </TestContainer>
   );
 };
