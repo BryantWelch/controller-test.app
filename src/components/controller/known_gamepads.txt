@@ -64,6 +64,7 @@
 045e:02dd XboxOneController_02dd
 045e:02e0 XboxOneSControllerBluetooth_02e0
 045e:02e3 XboxOneEliteController_02e3
+045e:0b00 XboxOneElite2Controller_0b00
 045e:02ea XboxOneSControllerUsb
 045e:02fd XboxOneSControllerBluetooth_02fd
 045e:02ff XboxOneEliteController_02ff
@@ -101,6 +102,8 @@
 050d:0802 NostromoN40
 050d:0803 NostromoN45
 050d:0805 NostromoN50
+054c:0df2 DualSenseEdgePS5
+054c:0ce6 DualSensePS5
 054c:0268 Dualshock3Sixaxis
 054c:042f SplitFishFragFx
 054c:05c4 Dualshock4_05c4
@@ -576,3 +579,4 @@ f000:0008 RetroUsbGenesisRetroport
 f000:00f1 RetroUsbSuperRetroPort
 f766:0001 GreystormPcGamepad
 f766:0005 BrutalLegendTest
+18d1:9400 GoogleStadiaController

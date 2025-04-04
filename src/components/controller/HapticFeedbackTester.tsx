@@ -113,14 +113,29 @@ const HapticButton = styled(motion.button)<{ variant?: string }>`
   border-radius: ${theme.borderRadius.md};
   border: none;
   cursor: pointer;
-  font-weight: 600;
-  font-size: ${theme.fontSizes.sm};
+  font-weight: 700;
+  font-size: ${theme.fontSizes.md};
   background-color: ${props => 
     props.variant === 'strong' ? theme.colors.accent :
     props.variant === 'weak' ? theme.colors.secondary :
-    theme.colors.primary
+    '#5AFCB0' // Brighter green for better contrast
   };
-  color: ${theme.colors.text};
+  color: ${props => 
+    props.variant ? theme.colors.text :
+    '#001209' // Dark background color for contrast
+  };
+  text-shadow: ${props => 
+    props.variant ? 'none' :
+    '0 0 2px rgba(0, 18, 9, 0.2)' // Subtle text shadow for better readability
+  };
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
   
   &:disabled {
     opacity: 0.5;
@@ -175,32 +190,61 @@ const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({
     {
       name: 'Pulse',
       sequence: [
-        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 0.0, delay: 0 },
-        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 150 },
-        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 0.0, delay: 0 },
-      ]
-    },
-    {
-      name: 'Heartbeat',
-      sequence: [
-        { duration: 100, strongMagnitude: 0.7, weakMagnitude: 0.3, delay: 0 },
-        { duration: 80, strongMagnitude: 1.0, weakMagnitude: 0.5, delay: 120 },
+        { duration: 200, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+        { duration: 200, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 200 },
+        { duration: 200, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
       ]
     },
     {
       name: 'Escalating',
       sequence: [
-        { duration: 100, strongMagnitude: 0.2, weakMagnitude: 0.1, delay: 0 },
-        { duration: 100, strongMagnitude: 0.4, weakMagnitude: 0.2, delay: 150 },
-        { duration: 100, strongMagnitude: 0.6, weakMagnitude: 0.3, delay: 150 },
-        { duration: 100, strongMagnitude: 0.8, weakMagnitude: 0.4, delay: 150 },
-        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 0.5, delay: 150 },
+        { duration: 150, strongMagnitude: 0.2, weakMagnitude: 0.2, delay: 0 },
+        { duration: 150, strongMagnitude: 0.4, weakMagnitude: 0.4, delay: 200 },
+        { duration: 150, strongMagnitude: 0.6, weakMagnitude: 0.6, delay: 200 },
+        { duration: 150, strongMagnitude: 0.8, weakMagnitude: 0.8, delay: 200 },
+        { duration: 150, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 200 },
       ]
     },
     {
       name: 'Rumble',
       sequence: [
-        { duration: 500, strongMagnitude: 0.8, weakMagnitude: 0.8, delay: 0 },
+        { duration: 1000, strongMagnitude: 0.8, weakMagnitude: 0.8, delay: 0 },
+      ]
+    },
+    {
+      name: 'SOS',
+      sequence: [
+        // S (3 short pulses)
+        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
+        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
+        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+        // Pause between letters
+        { duration: 0, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 300 },
+        // O (3 long pulses)
+        { duration: 300, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
+        { duration: 300, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
+        { duration: 300, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+        // Pause between letters
+        { duration: 0, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 300 },
+        // S (3 short pulses)
+        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
+        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
+        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+      ]
+    },
+    {
+      name: 'Alternating',
+      sequence: [
+        { duration: 300, strongMagnitude: 1.0, weakMagnitude: 0.0, delay: 0 },
+        { duration: 300, strongMagnitude: 0.0, weakMagnitude: 1.0, delay: 50 },
+        { duration: 300, strongMagnitude: 1.0, weakMagnitude: 0.0, delay: 50 },
+        { duration: 300, strongMagnitude: 0.0, weakMagnitude: 1.0, delay: 50 },
       ]
     }
   ];
@@ -290,7 +334,7 @@ const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({
             <Slider 
               type="range" 
               min={50} 
-              max={1000} 
+              max={2000} 
               step={50} 
               value={duration} 
               onChange={(e) => setDuration(parseInt(e.target.value))} 
