@@ -7,6 +7,7 @@ import Layout from './components/layout/Layout';
 import Home from './pages/Home';
 import Test from './pages/Test';
 import About from './pages/About';
+import Privacy from './pages/Privacy';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/test" element={<Test />} />
             <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<Privacy />} />
           </Routes>
         </Layout>
       </Router>

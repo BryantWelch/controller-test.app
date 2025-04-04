@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import Breadcrumbs from './Breadcrumbs';
 import { theme } from '../../styles/theme';
 
 const Main = styled.main`
@@ -33,6 +34,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <Navbar />
       <Main>
         <ContentContainer>
+          <Breadcrumbs />
           {children}
         </ContentContainer>
         <Footer />

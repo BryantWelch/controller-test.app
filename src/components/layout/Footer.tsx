@@ -239,6 +239,12 @@ const Footer: React.FC = () => {
           >
             MIT License
           </FooterLink>
+          {" | "}
+          <FooterLink 
+            href="/privacy"
+          >
+            Privacy Policy
+          </FooterLink>
         </p>
         
         <KofiButton>

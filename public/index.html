@@ -7,19 +7,19 @@
     <meta name="theme-color" content="#001209" />
     <meta
       name="description"
-      content="A modern web application for testing and diagnosing game controllers with real-time visual feedback."
+      content="Free online tool to test, diagnose, and visualize game controllers. Detect stick drift, verify button responses, and identify Xbox, PlayStation, Nintendo, and other controllers with real-time feedback."
     />
-    <meta name="keywords" content="controller test, gamepad test, xbox controller, playstation controller, nintendo controller, stick drift, button test" />
+    <meta name="keywords" content="controller test, gamepad test, xbox controller, playstation controller, nintendo controller, stick drift, button test, controller drift, controller diagnostics, xbox elite controller, dualsense controller, switch pro controller, stadia controller, controller identification, gamepad visualization" />
     <meta name="author" content="Bryant Welch" />
     <!-- Open Graph / Social Media Meta Tags -->
-    <meta property="og:title" content="Controller Test" />
-    <meta property="og:description" content="A modern web application for testing and diagnosing game controllers with real-time visual feedback." />
+    <meta property="og:title" content="Controller Test App - Test & Diagnose Game Controllers Online" />
+    <meta property="og:description" content="Free online tool to test, diagnose, and visualize game controllers. Detect stick drift, verify button responses, and identify Xbox, PlayStation, Nintendo, and other controllers with real-time feedback." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://controller-test.app" />
     <meta property="og:image" content="%PUBLIC_URL%/logo512.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Controller Test" />
-    <meta name="twitter:description" content="A modern web application for testing and diagnosing game controllers with real-time visual feedback." />
+    <meta name="twitter:title" content="Controller Test App - Test & Diagnose Game Controllers Online" />
+    <meta name="twitter:description" content="Free online tool to test, diagnose, and visualize game controllers. Detect stick drift, verify button responses, and identify Xbox, PlayStation, Nintendo, and other controllers with real-time feedback." />
     <meta name="twitter:image" content="%PUBLIC_URL%/logo512.png" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <!--
@@ -36,7 +36,32 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>Controller Test</title>
+    <title>Controller Test App - Test & Diagnose Game Controllers Online</title>
+    <!-- Structured Data / JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Controller Test App",
+      "url": "https://controller-test.app",
+      "description": "A modern web application for testing and diagnosing game controllers with real-time visual feedback, stick drift detection, and button response testing.",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Bryant Welch"
+      },
+      "browserRequirements": "Requires JavaScript. Compatible with modern browsers that support the Gamepad API.",
+      "featureList": "Controller detection, Button testing, Analog stick visualization, Stick drift detection, Controller identification",
+      "screenshot": "https://controller-test.app/logo512.png",
+      "softwareHelp": "https://controller-test.app/resources"
+    }
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
