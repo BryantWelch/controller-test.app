@@ -27,7 +27,7 @@ export function parseVendorProductId(gamepadId: string): string | null {
   }
   
   // Try to extract in format containing xxxx-yyyy or xxxx/yyyy
-  const altRegex = /([0-9a-f]{4})[\-\/]([0-9a-f]{4})/i;
+  const altRegex = /([0-9a-f]{4})[-/]([0-9a-f]{4})/i;
   const altMatch = gamepadId.match(altRegex);
   
   if (altMatch && altMatch[1] && altMatch[2]) {

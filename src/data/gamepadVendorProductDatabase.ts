@@ -79,9 +79,9 @@ export function mapVendorProductIdToController(
     if ((lowerCaseName.includes('playstation') || lowerCaseName.includes('dual')) && 
         controller.type === 'playstation') {
       if (
-        (lowerCaseName.includes('5') || lowerCaseName.includes('dualsense')) && controller.id === 'ps5-dualsense' ||
-        (lowerCaseName.includes('4') || lowerCaseName.includes('dualshock 4')) && controller.id === 'ps4-dualshock4' ||
-        (lowerCaseName.includes('3') || lowerCaseName.includes('dualshock 3')) && controller.id === 'ps3-dualshock3'
+        ((lowerCaseName.includes('5') || lowerCaseName.includes('dualsense')) && controller.id === 'ps5-dualsense') ||
+        ((lowerCaseName.includes('4') || lowerCaseName.includes('dualshock 4')) && controller.id === 'ps4-dualshock4') ||
+        ((lowerCaseName.includes('3') || lowerCaseName.includes('dualshock 3')) && controller.id === 'ps3-dualshock3')
       ) {
         return controller;
       }
@@ -131,7 +131,7 @@ function extractVendorProductId(gamepadId: string): string | null {
   }
   
   // Try to extract in format containing xxxx-yyyy or xxxx/yyyy
-  const altRegex = /([0-9a-f]{4})[\-\/]([0-9a-f]{4})/i;
+  const altRegex = /([0-9a-f]{4})[-/]([0-9a-f]{4})/i;
   const altMatch = gamepadId.match(altRegex);
   
   if (altMatch && altMatch[1] && altMatch[2]) {
