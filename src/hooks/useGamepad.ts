@@ -406,7 +406,7 @@ export const useGamepad = (deadzone: number = 0.05) => {
       window.removeEventListener('gamepadconnected', handleGamepadConnected);
       window.removeEventListener('gamepaddisconnected', handleGamepadDisconnected);
     };
-  }, [isSupported, deadzone]);
+  }, [isSupported, deadzone, activeGamepad]);
 
   // Update gamepad state on animation frame
   useEffect(() => {
@@ -541,7 +541,7 @@ export const useGamepad = (deadzone: number = 0.05) => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isSupported, activeGamepad, deadzone]);
+  }, [isSupported, deadzone, activeGamepad]);
 
   // Set a gamepad as active
   const setGamepadActive = (index: number) => {
