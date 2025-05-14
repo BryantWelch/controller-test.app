@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { theme } from '../../styles/theme';
 import { useGamepad } from '../../hooks/useGamepad';
-import { parseVendorProductId } from '../../data/controllerDatabase';
-import { buildVendorProductDatabase, VendorProductMapping } from '../../data/gamepadVendorProductDatabase';
+import { extractVendorProductId, loadKnownGamepadsDatabase } from '../../data/controllerDatabase';
 
 const TestContainer = styled.div`
   padding: ${theme.space.lg};
@@ -51,13 +50,13 @@ const ErrorValue = styled(Value)`
 
 const ControllerIdentifierTest: React.FC = () => {
   const { activeGamepad } = useGamepad();
-  const [vendorProductDatabase, setVendorProductDatabase] = useState<VendorProductMapping>({});
+  const [vendorProductDatabase, setVendorProductDatabase] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadDatabase = async () => {
       try {
-        const database = await buildVendorProductDatabase();
+        const database = await loadKnownGamepadsDatabase();
         setVendorProductDatabase(database);
         setLoading(false);
       } catch (error) {
@@ -88,7 +87,7 @@ const ControllerIdentifierTest: React.FC = () => {
   }
 
   // Extract vendor/product ID from gamepad ID
-  const vendorProductId = parseVendorProductId(activeGamepad.id);
+  const vendorProductId = extractVendorProductId(activeGamepad.id);
   
   // Look up the controller name in our database
   const controllerName = vendorProductId && vendorProductDatabase[vendorProductId] 
@@ -139,7 +138,7 @@ const ControllerIdentifierTest: React.FC = () => {
           <Value>{activeGamepad.type}</Value>
         </InfoRow>
         
-        {activeGamepad.modelInfo && (
+        {activeGamepad.modelInfo && activeGamepad.modelInfo.features && (
           <InfoRow>
             <Label>Features:</Label>
             <Value>

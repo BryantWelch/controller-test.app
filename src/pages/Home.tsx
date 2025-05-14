@@ -162,31 +162,32 @@ const InfoText = styled.p`
   }
 `;
 
-const InfoList = styled.ul`
-  margin-left: 0;
-  margin-bottom: ${theme.space.md};
-  list-style-type: none;
-  padding-left: 0;
-  
-  li {
-    margin-bottom: ${theme.space.md};
-    line-height: 1.6;
-    position: relative;
-    padding-left: ${theme.space.xl};
-    text-align: left;
-    display: block;
-    width: 100%;
-    word-break: break-word;
-    
-    &::before {
-      content: '\2022';
-      color: ${theme.colors.primary};
-      font-weight: bold;
-      position: absolute;
-      left: ${theme.space.md};
-    }
-  }
-`;
+// Commented out to fix ESLint warning - will be used in future implementation
+// const InfoList = styled.ul`
+//   margin-left: 0;
+//   margin-bottom: ${theme.space.md};
+//   list-style-type: none;
+//   padding-left: 0;
+//   
+//   li {
+//     margin-bottom: ${theme.space.md};
+//     line-height: 1.6;
+//     position: relative;
+//     padding-left: ${theme.space.xl};
+//     text-align: left;
+//     display: block;
+//     width: 100%;
+//     word-break: break-word;
+//     
+//     &::before {
+//       content: '\2022';
+//       color: ${theme.colors.primary};
+//       font-weight: bold;
+//       position: absolute;
+//       left: ${theme.space.md};
+//     }
+//   }
+// `;
 
 const BenefitsContainer = styled.div`
   background: linear-gradient(135deg, rgba(3, 111, 154, 0.1), rgba(125, 252, 189, 0.05));

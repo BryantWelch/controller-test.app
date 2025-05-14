@@ -79,11 +79,12 @@ const FooterLink = styled.a`
   }
 `;
 
-const FooterText = styled.p`
-  margin-bottom: ${theme.space.md};
-  font-size: ${theme.fontSizes.sm};
-  line-height: 1.6;
-`;
+// Commented out to fix ESLint warning - will be used in future implementation
+// const FooterText = styled.p`
+//   margin-bottom: ${theme.space.md};
+//   font-size: ${theme.fontSizes.sm};
+//   line-height: 1.6;
+// `;
 
 const Copyright = styled.div`
   text-align: center;

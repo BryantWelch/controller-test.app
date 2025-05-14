@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGamepad } from '../hooks/useGamepad';
 import { theme } from '../styles/theme';
 import ControllerDisplay from '../components/controller/ControllerDisplay';
-import ControllerModelVisualizer from '../components/controller/ControllerModelVisualizer';
 import HapticFeedbackTester from '../components/controller/HapticFeedbackTester';
 import AdvancedDiagnostics from '../components/controller/AdvancedDiagnostics';
 import ControllerProfileManager from '../components/controller/ControllerProfileManager';
@@ -49,23 +48,40 @@ const NoControllerMessage = styled(motion.div)`
   max-width: 600px;
 `;
 
-const NoControllerIcon = styled.div`
+const MessageIcon = styled.div`
   font-size: 4rem;
   margin-bottom: ${theme.space.md};
-  color: ${theme.colors.accent};
+  color: ${props => props.color || theme.colors.accent};
 `;
 
-const NoControllerTitle = styled.h3`
+const MessageTitle = styled.h3`
   font-size: ${theme.fontSizes.xl};
   margin-bottom: ${theme.space.md};
   color: ${theme.colors.primary};
 `;
 
-const NoControllerText = styled.p`
+const MessageText = styled.p`
   font-size: ${theme.fontSizes.md};
   text-align: center;
   margin-bottom: ${theme.space.lg};
   color: ${theme.colors.text};
+`;
+
+const NotificationPopup = styled(motion.div)`
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: ${theme.colors.backgroundLight};
+  border-radius: ${theme.borderRadius.md};
+  padding: ${theme.space.md} ${theme.space.lg};
+  box-shadow: ${theme.shadows.lg};
+  display: flex;
+  align-items: center;
+  gap: ${theme.space.sm};
+  z-index: 1000;
+  color: ${theme.colors.text};
+  border-left: 4px solid ${theme.colors.primary};
 `;
 
 const StepsList = styled.ol`
@@ -91,50 +107,17 @@ const ControllerInfo = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: ${theme.space.xl};
-  background-color: ${theme.colors.backgroundLight};
-  border-radius: ${theme.borderRadius.md};
-  padding: ${theme.space.lg};
-  width: 100%;
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
-`;
-
-const ControllerName = styled.h2`
-  font-size: ${theme.fontSizes.xl};
-  color: ${theme.colors.primary};
-  margin-bottom: ${theme.space.md};
-`;
-
-const ControllerType = styled.div`
-  font-size: ${theme.fontSizes.sm};
-  color: ${theme.colors.textDark};
-`;
-
-const ControllerDetails = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${theme.space.sm};
-  margin-bottom: ${theme.space.md};
-`;
-
-const DetailItem = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: ${theme.space.sm};
-`;
-
-const DetailLabel = styled.div`
-  font-size: ${theme.fontSizes.sm};
-  color: ${theme.colors.textDark};
-  margin-bottom: ${theme.space.xs};
-`;
-
-const DetailValue = styled.div`
-  font-size: ${theme.fontSizes.md};
-  color: ${theme.colors.text};
+  
+  h2 {
+    font-size: ${theme.fontSizes.xl};
+    color: ${theme.colors.primary};
+    margin-bottom: ${theme.space.md};
+  }
+  
+  div {
+    font-size: ${theme.fontSizes.sm};
+    color: ${theme.colors.textDark};
+  }
 `;
 
 const ControllerDetailsCard = styled.div`
@@ -163,18 +146,13 @@ const ControllerDetailRow = styled.div`
   }
 `;
 
-const ControllerDetailLabel = styled.div`
+const DetailText = styled.div<{ isLabel?: boolean }>`
   font-size: ${theme.fontSizes.sm};
-  color: ${theme.colors.primary};
-  font-weight: 600;
-`;
-
-const ControllerDetailValue = styled.div`
-  font-size: ${theme.fontSizes.sm};
-  color: ${theme.colors.text};
-  text-align: right;
-  word-break: break-word;
-  max-width: 60%;
+  color: ${props => props.isLabel ? theme.colors.primary : theme.colors.text};
+  font-weight: ${props => props.isLabel ? 600 : 'normal'};
+  text-align: ${props => props.isLabel ? 'left' : 'right'};
+  word-break: ${props => props.isLabel ? 'normal' : 'break-word'};
+  max-width: ${props => props.isLabel ? 'auto' : '60%'};
 `;
 
 const ControllerDetailFeatures = styled.div`
@@ -193,7 +171,7 @@ const FeatureTag = styled.span`
   font-weight: 600;
 `;
 
-const BrowserInfo = styled.div`
+const InfoContainer = styled.div`
   display: flex;
   align-items: center;
   margin-top: ${theme.space.md};
@@ -202,38 +180,24 @@ const BrowserInfo = styled.div`
   border-radius: ${theme.borderRadius.md};
 `;
 
-const BrowserIcon = styled.div`
+const InfoIcon = styled.div`
   font-size: ${theme.fontSizes.lg};
   margin-right: ${theme.space.sm};
 `;
 
-const BrowserText = styled.div`
+const InfoText = styled.div`
   font-size: ${theme.fontSizes.sm};
   color: ${theme.colors.text};
 `;
 
-const BrowserCompatibility = styled.div<{ isSupported: boolean }>`
+const StatusBadge = styled.div<{ success?: boolean }>`
   display: inline-block;
   margin-left: ${theme.space.sm};
   padding: ${theme.space.xs} ${theme.space.sm};
   border-radius: ${theme.borderRadius.sm};
   font-size: ${theme.fontSizes.xs};
-  background-color: ${props => props.isSupported ? 'rgba(125, 252, 189, 0.2)' : 'rgba(244, 67, 54, 0.2)'};
-  color: ${props => props.isSupported ? theme.colors.primary : '#F44336'};
-`;
-
-const SectionContainer = styled.div`
-  width: 100%;
-  max-width: 800px;
-  margin-bottom: ${theme.space.xl};
-`;
-
-const SectionTitle = styled.h3`
-  color: ${theme.colors.primary};
-  font-size: ${theme.fontSizes.lg};
-  margin-bottom: ${theme.space.md};
-  padding-bottom: ${theme.space.sm};
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: ${props => props.success ? 'rgba(125, 252, 189, 0.2)' : 'rgba(244, 67, 54, 0.2)'};
+  color: ${props => props.success ? theme.colors.primary : '#F44336'};
 `;
 
 const TabsContainer = styled.div`
@@ -270,7 +234,14 @@ const Tab = styled.button<{ active: boolean }>`
   }
 `;
 
-const ExportButton = styled(motion.button)`
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: ${theme.space.lg};
+  width: 100%;
+`;
+
+const ActionButton = styled(motion.button)`
   background-color: ${theme.colors.backgroundLight};
   color: ${theme.colors.text};
   border: none;
@@ -287,36 +258,15 @@ const ExportButton = styled(motion.button)`
     background-color: ${theme.colors.primary};
     color: ${theme.colors.backgroundDark};
   }
-`;
-
-const ExportButtonContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: ${theme.space.lg};
-  width: 100%;
-`;
-
-const ExportIcon = styled.span`
-  font-size: ${theme.fontSizes.md};
-`;
-
-const WarningIcon = styled.div`
-  font-size: 3rem;
-  margin-bottom: ${theme.space.md};
-`;
-
-const BrowserName = styled.span`
-  font-weight: bold;
-`;
-
-const BrowserSupport = styled.span<{ supported: boolean }>`
-  margin-left: ${theme.space.sm};
-  color: ${props => props.supported ? theme.colors.primary : theme.colors.secondary};
+  
+  span {
+    font-size: ${theme.fontSizes.md};
+  }
 `;
 
 const ControllerHeader = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   width: 100%;
   margin-bottom: ${theme.space.md};
@@ -331,21 +281,33 @@ type TabType = 'visualization' | 'diagnostics' | 'haptic' | 'profiles' | 'identi
 
 const Test: React.FC = () => {
   const { 
-    gamepads, 
     activeGamepad, 
     isSupported,
-    browserInfo,
     updateDeadZones,
     triggerHapticFeedback
   } = useGamepad();
   
   const [activeTab, setActiveTab] = useState<TabType>('visualization');
+  const [showNotification, setShowNotification] = useState<boolean>(false);
+  const [notificationMessage, setNotificationMessage] = useState<string>('');
   
-  // Function to export controller data
+  const showControllerRequiredNotification = () => {
+    setNotificationMessage('Please connect a controller to use this feature');
+    setShowNotification(true);
+    setTimeout(() => setShowNotification(false), 3000);
+  };
+  
+  const safeSetActiveTab = (tab: TabType) => {
+    if (tab !== 'visualization' && !activeGamepad) {
+      showControllerRequiredNotification();
+      return;
+    }
+    setActiveTab(tab);
+  };
+  
   const exportControllerData = () => {
     if (!activeGamepad) return;
     
-    // Create a formatted JSON object with controller data
     const exportData = {
       controller: {
         id: activeGamepad.id,
@@ -363,19 +325,20 @@ const Test: React.FC = () => {
         index,
         value: axis
       })),
-      stickDrift: activeGamepad.stickDrift,
+      stickDrift: activeGamepad.stickDrift ?? {
+        leftStick: { detected: false, value: { x: 0, y: 0 } },
+        rightStick: { detected: false, value: { x: 0, y: 0 } }
+      },
       diagnostics: {
-        pollingRate: activeGamepad.pollingData.rate,
-        latency: activeGamepad.latencyData.averageLatency,
-        browser: `${activeGamepad.browserCompatibility.name} ${activeGamepad.browserCompatibility.version}`
+        pollingRate: activeGamepad.pollingData?.rate ?? 0,
+        latency: activeGamepad.latencyData?.averageLatency ?? 0,
+        browser: `${activeGamepad.browserCompatibility?.name ?? 'Unknown'} ${activeGamepad.browserCompatibility?.version ?? ''}`
       },
       timestamp: new Date().toISOString()
     };
     
-    // Convert to a JSON string with pretty formatting
     const jsonString = JSON.stringify(exportData, null, 2);
     
-    // Create a blob and download link
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -384,15 +347,13 @@ const Test: React.FC = () => {
     document.body.appendChild(a);
     a.click();
     
-    // Clean up
     setTimeout(() => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }, 100);
   };
   
-  // Function to handle loading a profile
-  const handleLoadProfile = (profile: any) => {
+  const handleLoadProfile = (profile: { deadZones?: { leftStick: number | string, rightStick: number | string } }) => {
     if (profile && profile.deadZones) {
       const leftDeadZone = typeof profile.deadZones.leftStick === 'string' 
         ? parseFloat(profile.deadZones.leftStick) 
@@ -406,136 +367,98 @@ const Test: React.FC = () => {
     }
   };
   
-  if (!isSupported) {
-    return (
-      <TestContainer>
-        <Title
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          Controller Test
-        </Title>
+  const BrowserCompatibilityInfo = () => (
+    <InfoContainer>
+      <InfoIcon>
+        <i className="fas fa-browser" />
+      </InfoIcon>
+      <InfoText>
+        <div>Browser Compatibility</div>
+        <StatusBadge success={isSupported}>
+          {isSupported ? 'Supported' : 'Not Supported'}
+        </StatusBadge>
+      </InfoText>
+    </InfoContainer>
+  );
+
+  const renderContent = () => {
+    if (!isSupported) {
+      return (
         <NoControllerMessage
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <WarningIcon>⚠️</WarningIcon>
-          <NoControllerTitle>Gamepad API Not Supported</NoControllerTitle>
-          <NoControllerText>
-            Your browser doesn't support the Gamepad API, which is required to test controllers.
-            Please try using a modern browser like Chrome, Edge, Firefox, or Safari.
-          </NoControllerText>
+          <MessageIcon>
+            <i className="fas fa-exclamation-triangle" />
+          </MessageIcon>
+          <MessageTitle>
+            No Controller Detected
+          </MessageTitle>
+          <MessageText>
+            Please connect a controller to your device to begin testing.
+          </MessageText>
+
+          <MessageText>
+            <strong>Supported Controllers:</strong>
+          </MessageText>
+          <MessageText>
+            Xbox, PlayStation, Nintendo Switch Pro, and most other USB or Bluetooth controllers.
+          </MessageText>
+          <BrowserCompatibilityInfo />
         </NoControllerMessage>
-      </TestContainer>
-    );
-  }
-  
-  if (!activeGamepad) {
+      );
+    }
+    
+    // Case 2: No controller detected
+    if (!activeGamepad) {
+      return (
+        <>
+          <Subtitle
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            Connect your controller and press any button to begin testing
+          </Subtitle>
+          <NoControllerMessage
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <MessageIcon>🎮</MessageIcon>
+            <MessageTitle>No Controller Detected</MessageTitle>
+            <MessageText>
+              We couldn't detect a connected controller. Please follow these steps:
+            </MessageText>
+            <StepsList>
+              <StepItem>Make sure your controller is connected to your device via USB, Bluetooth, or WiFi.</StepItem>
+              <StepItem>If using a wireless controller, ensure it's charged and turned on.</StepItem>
+              <StepItem>Press any button on your controller to activate it.</StepItem>
+              <StepItem>Some browsers require a button press to initialize controller detection.</StepItem>
+              <StepItem>Try refreshing the page after connecting your controller.</StepItem>
+            </StepsList>
+            <MessageText>
+              Once connected, your controller should be automatically detected and displayed here.
+            </MessageText>
+            
+            <BrowserCompatibilityInfo />
+          </NoControllerMessage>
+        </>
+      );
+    }
+    
+    // Case 3: Controller detected and active
     return (
-      <TestContainer>
-        <Title
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          Controller Test
-        </Title>
+      <>
         <Subtitle
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          Connect your controller and press any button to begin testing
+          Test your gamepad's buttons, sticks, and triggers. Diagnose issues like stick drift and input latency.
         </Subtitle>
-        <NoControllerMessage
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <NoControllerIcon>🎮</NoControllerIcon>
-          <NoControllerTitle>No Controller Detected</NoControllerTitle>
-          <NoControllerText>
-            We couldn't detect a connected controller. Please follow these steps:
-          </NoControllerText>
-          <StepsList>
-            <StepItem>Make sure your controller is connected to your device via USB, Bluetooth, or WiFi.</StepItem>
-            <StepItem>If using a wireless controller, ensure it's charged and turned on.</StepItem>
-            <StepItem>Press any button on your controller to activate it.</StepItem>
-            <StepItem>Some browsers require a button press to initialize controller detection.</StepItem>
-            <StepItem>Try refreshing the page after connecting your controller.</StepItem>
-          </StepsList>
-          <NoControllerText>
-            Once connected, your controller should be automatically detected and displayed here.
-          </NoControllerText>
-          
-          <BrowserInfo>
-            <BrowserIcon>🌐</BrowserIcon>
-            <BrowserText>
-              Browser: {browserInfo.name} {browserInfo.version}
-              <BrowserCompatibility isSupported={browserInfo.fullSupport}>
-                {browserInfo.fullSupport ? 'Fully Supported' : 'Limited Support'}
-              </BrowserCompatibility>
-            </BrowserText>
-          </BrowserInfo>
-        </NoControllerMessage>
-      </TestContainer>
-    );
-  }
-  
-  return (
-    <TestContainer>
-      <Title
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        Controller Test
-      </Title>
-      <Subtitle
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        Test your gamepad's buttons, sticks, and triggers. Diagnose issues like stick drift and input latency.
-      </Subtitle>
-      
-      {!isSupported && (
-        <NoControllerMessage
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <WarningIcon>⚠️</WarningIcon>
-          <NoControllerTitle>Gamepad API Not Supported</NoControllerTitle>
-          <NoControllerText>
-            Your browser doesn't support the Gamepad API. Please try using a modern browser like Chrome, Edge, or Firefox.
-          </NoControllerText>
-        </NoControllerMessage>
-      )}
-      
-      {isSupported && !activeGamepad && (
-        <NoControllerMessage
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <WarningIcon>🎮</WarningIcon>
-          <NoControllerTitle>No Controller Detected</NoControllerTitle>
-          <NoControllerText>
-            Connect a controller and press any button to activate it.
-          </NoControllerText>
-          <BrowserInfo>
-            <BrowserName>{browserInfo.name} {browserInfo.version}</BrowserName>
-            <BrowserSupport supported={browserInfo.fullSupport}>
-              {browserInfo.fullSupport ? 'Full Support' : 'Limited Support'}
-            </BrowserSupport>
-          </BrowserInfo>
-        </NoControllerMessage>
-      )}
-      
-      {isSupported && activeGamepad && (
+        
         <ControllerSection
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -543,50 +466,85 @@ const Test: React.FC = () => {
         >
           <ControllerHeader>
             <ControllerInfo>
-              <ControllerName>
-                {activeGamepad.modelInfo ? activeGamepad.modelInfo.name : 'Generic Controller'}
-              </ControllerName>
-              <ControllerType>
-                {activeGamepad.modelInfo ? activeGamepad.modelInfo.manufacturer : activeGamepad.type}
-              </ControllerType>
+              <h2>
+                {activeGamepad?.modelInfo?.name || 'Generic Controller'}
+              </h2>
+              <div>
+                {activeGamepad?.type}
+              </div>
             </ControllerInfo>
           </ControllerHeader>
           
           <TabsContainer>
             <Tab 
               active={activeTab === 'visualization'} 
-              onClick={() => setActiveTab('visualization')}
+              onClick={() => safeSetActiveTab('visualization')}
             >
               Visualization
             </Tab>
             <Tab 
               active={activeTab === 'diagnostics'} 
-              onClick={() => setActiveTab('diagnostics')}
+              onClick={() => safeSetActiveTab('diagnostics')}
             >
               Diagnostics
             </Tab>
             <Tab 
               active={activeTab === 'haptic'} 
-              onClick={() => setActiveTab('haptic')}
+              onClick={() => safeSetActiveTab('haptic')}
             >
               Haptic Feedback
             </Tab>
             <Tab 
               active={activeTab === 'profiles'} 
-              onClick={() => setActiveTab('profiles')}
+              onClick={() => safeSetActiveTab('profiles')}
             >
               Profiles
             </Tab>
             <Tab 
               active={activeTab === 'identifier'} 
-              onClick={() => setActiveTab('identifier')}
+              onClick={() => safeSetActiveTab('identifier')}
             >
               Identifier
             </Tab>
           </TabsContainer>
           
+          {/* Notification popup */}
+          {showNotification && (
+            <NotificationPopup
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <MessageIcon>🎮</MessageIcon>
+              {notificationMessage}
+            </NotificationPopup>
+          )}
+          
           <AnimatePresence mode="wait">
-            {activeTab === 'visualization' && (
+            {!activeGamepad && activeTab !== 'visualization' && (
+              <TabContent
+                key="no-controller"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <NoControllerMessage
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <MessageIcon>🎮</MessageIcon>
+                  <MessageTitle>Controller Required</MessageTitle>
+                  <MessageText>
+                    Please connect a controller to use this feature.
+                  </MessageText>
+                </NoControllerMessage>
+              </TabContent>
+            )}
+            
+            {activeTab === 'visualization' && activeGamepad && (
               <TabContent
                 key="visualization"
                 initial={{ opacity: 0, x: 20 }}
@@ -598,31 +556,45 @@ const Test: React.FC = () => {
                 
                 <ControllerDetailsCard>
                   <ControllerDetailRow>
-                    <ControllerDetailLabel>Model</ControllerDetailLabel>
-                    <ControllerDetailValue>
-                      {activeGamepad.modelInfo ? activeGamepad.modelInfo.name : 'Generic Controller'}
-                    </ControllerDetailValue>
+                    <DetailText isLabel>
+                      Model
+                    </DetailText>
+                    <DetailText>
+                      {activeGamepad.modelInfo?.name || 'Unknown'}
+                    </DetailText>
                   </ControllerDetailRow>
-                  
+                    
                   <ControllerDetailRow>
-                    <ControllerDetailLabel>Manufacturer</ControllerDetailLabel>
-                    <ControllerDetailValue>
-                      {activeGamepad.modelInfo ? activeGamepad.modelInfo.manufacturer : 'Unknown'}
-                    </ControllerDetailValue>
+                    <DetailText isLabel>
+                      Manufacturer
+                    </DetailText>
+                    <DetailText>
+                      {activeGamepad.modelInfo?.manufacturer || 'Unknown'}
+                    </DetailText>
                   </ControllerDetailRow>
-                  
+                    
                   <ControllerDetailRow>
-                    <ControllerDetailLabel>Controller ID</ControllerDetailLabel>
-                    <ControllerDetailValue>{activeGamepad.id}</ControllerDetailValue>
+                    <DetailText isLabel>
+                      Controller ID
+                    </DetailText>
+                    <DetailText>
+                      {activeGamepad.id}
+                    </DetailText>
                   </ControllerDetailRow>
-                  
+                    
                   <ControllerDetailRow>
-                    <ControllerDetailLabel>Mapping</ControllerDetailLabel>
-                    <ControllerDetailValue>{activeGamepad.mapping}</ControllerDetailValue>
+                    <DetailText isLabel>
+                      Mapping
+                    </DetailText>
+                    <DetailText>
+                      {activeGamepad.mapping}
+                    </DetailText>
                   </ControllerDetailRow>
-                  
+                    
                   <ControllerDetailRow>
-                    <ControllerDetailLabel>Features</ControllerDetailLabel>
+                    <DetailText isLabel>
+                      Features
+                    </DetailText>
                     <ControllerDetailFeatures>
                       <FeatureTag>Wireless</FeatureTag>
                       {activeGamepad.hapticCapabilities.supported && (
@@ -634,7 +606,7 @@ const Test: React.FC = () => {
               </TabContent>
             )}
             
-            {activeTab === 'diagnostics' && (
+            {activeTab === 'diagnostics' && activeGamepad && (
               <TabContent
                 key="diagnostics"
                 initial={{ opacity: 0, x: 20 }}
@@ -649,7 +621,7 @@ const Test: React.FC = () => {
               </TabContent>
             )}
             
-            {activeTab === 'haptic' && (
+            {activeTab === 'haptic' && activeGamepad && (
               <TabContent
                 key="haptic"
                 initial={{ opacity: 0, x: 20 }}
@@ -664,7 +636,7 @@ const Test: React.FC = () => {
               </TabContent>
             )}
             
-            {activeTab === 'profiles' && (
+            {activeTab === 'profiles' && activeGamepad && (
               <TabContent
                 key="profiles"
                 initial={{ opacity: 0, x: 20 }}
@@ -679,7 +651,7 @@ const Test: React.FC = () => {
               </TabContent>
             )}
             
-            {activeTab === 'identifier' && (
+            {activeTab === 'identifier' && activeGamepad && (
               <TabContent
                 key="identifier"
                 initial={{ opacity: 0, x: 20 }}
@@ -692,17 +664,34 @@ const Test: React.FC = () => {
             )}
           </AnimatePresence>
           
-          <ExportButtonContainer>
-            <ExportButton 
+          <ButtonContainer>
+            <ActionButton 
               onClick={exportControllerData}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <ExportIcon>📊</ExportIcon> Export Controller Data
-            </ExportButton>
-          </ExportButtonContainer>
+              <span>
+                <i className="fas fa-download" />
+              </span>
+              Export Controller Data
+            </ActionButton>
+          </ButtonContainer>
         </ControllerSection>
-      )}
+      </>
+    );
+  };
+  
+  return (
+    <TestContainer>
+      <Title
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        Controller Test
+      </Title>
+      
+      {renderContent()}
     </TestContainer>
   );
 };

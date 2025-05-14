@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion'; // Commented out to fix ESLint warning
 import { GamepadState } from '../../hooks/useGamepad';
 import { theme } from '../../styles/theme';
 
@@ -263,23 +263,25 @@ const GraphLabel = styled.div`
   font-size: ${theme.fontSizes.xs};
 `;
 
-const ButtonsContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${theme.space.md};
-  margin-top: ${theme.space.lg};
-`;
+// Commented out to fix ESLint warning - will be used in future implementation
+// const ButtonsContainer = styled.div`
+//   display: flex;
+//   flex-wrap: wrap;
+//   gap: ${theme.space.md};
+//   margin-top: ${theme.space.lg};
+// `;
 
-const ActionButton = styled(motion.button)`
-  padding: ${theme.space.sm} ${theme.space.md};
-  border-radius: ${theme.borderRadius.md};
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: ${theme.fontSizes.sm};
-  background-color: ${theme.colors.primary};
-  color: ${theme.colors.text};
-`;
+// Commented out to fix ESLint warning - will be used in future implementation
+// const ActionButton = styled(motion.button)`
+//   padding: ${theme.space.sm} ${theme.space.md};
+//   border-radius: ${theme.borderRadius.md};
+//   border: none;
+//   cursor: pointer;
+//   font-weight: 600;
+//   font-size: ${theme.fontSizes.sm};
+//   background-color: ${theme.colors.primary};
+//   color: ${theme.colors.text};
+// `;
 
 const InfoBox = styled.div`
   background-color: rgba(53, 137, 251, 0.1);
@@ -300,8 +302,8 @@ const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = ({
   updateDeadZones
 }) => {
   const [activeTab, setActiveTab] = useState('stickDrift');
-  const [leftDeadZone, setLeftDeadZone] = useState(gamepad.deadZones.leftStick);
-  const [rightDeadZone, setRightDeadZone] = useState(gamepad.deadZones.rightStick);
+  const [leftDeadZone, setLeftDeadZone] = useState(gamepad.deadZones?.leftStick ?? 0.05);
+  const [rightDeadZone, setRightDeadZone] = useState(gamepad.deadZones?.rightStick ?? 0.05);
   
   // Handle dead zone changes
   const handleDeadZoneChange = (stick: 0 | 1, value: number) => {
@@ -322,7 +324,7 @@ const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = ({
     return samples.map(sample => (sample / maxLatency) * 80); // 80% of graph height
   };
   
-  const normalizedLatencyData = normalizeLatencyData(gamepad.latencyData.samples);
+  const normalizedLatencyData = normalizeLatencyData(gamepad.latencyData?.samples ?? []);
   
   return (
     <DiagnosticsContainer>
@@ -354,15 +356,15 @@ const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = ({
           <MetricsGrid>
             <MetricCard>
               <MetricLabel>Left Stick Drift</MetricLabel>
-              <MetricValue highlight={gamepad.stickDrift.leftStick.detected}>
-                {gamepad.stickDrift.leftStick.detected ? 'Detected' : 'None'}
+              <MetricValue highlight={gamepad.stickDrift?.leftStick.detected ?? false}>
+                {gamepad.stickDrift?.leftStick.detected ? 'Detected' : 'None'}
               </MetricValue>
             </MetricCard>
             
             <MetricCard>
               <MetricLabel>Right Stick Drift</MetricLabel>
-              <MetricValue highlight={gamepad.stickDrift.rightStick.detected}>
-                {gamepad.stickDrift.rightStick.detected ? 'Detected' : 'None'}
+              <MetricValue highlight={gamepad.stickDrift?.rightStick.detected ?? false}>
+                {gamepad.stickDrift?.rightStick.detected ? 'Detected' : 'None'}
               </MetricValue>
             </MetricCard>
             
@@ -388,7 +390,7 @@ const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = ({
                 <StickPosition 
                   x={gamepad.axes[0]} 
                   y={gamepad.axes[1]} 
-                  isDrifting={gamepad.stickDrift.leftStick.detected}
+                  isDrifting={gamepad.stickDrift?.leftStick.detected ?? false}
                 />
               </StickCanvas>
               <div>
@@ -405,7 +407,7 @@ const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = ({
                 <StickPosition 
                   x={gamepad.axes[2]} 
                   y={gamepad.axes[3]} 
-                  isDrifting={gamepad.stickDrift.rightStick.detected}
+                  isDrifting={gamepad.stickDrift?.rightStick.detected ?? false}
                 />
               </StickCanvas>
               <div>
@@ -460,19 +462,19 @@ const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = ({
           <MetricsGrid>
             <MetricCard>
               <MetricLabel>Current Latency</MetricLabel>
-              <MetricValue>{gamepad.latencyData.currentLatency.toFixed(1)}</MetricValue>
+              <MetricValue>{(gamepad.latencyData?.currentLatency ?? 0).toFixed(1)}</MetricValue>
               <MetricUnit>ms</MetricUnit>
             </MetricCard>
             
             <MetricCard>
               <MetricLabel>Average Latency</MetricLabel>
-              <MetricValue>{gamepad.latencyData.averageLatency.toFixed(1)}</MetricValue>
+              <MetricValue>{(gamepad.latencyData?.averageLatency ?? 0).toFixed(1)}</MetricValue>
               <MetricUnit>ms</MetricUnit>
             </MetricCard>
             
             <MetricCard>
               <MetricLabel>Samples</MetricLabel>
-              <MetricValue>{gamepad.latencyData.samples.length}</MetricValue>
+              <MetricValue>{gamepad.latencyData?.samples?.length ?? 0}</MetricValue>
             </MetricCard>
           </MetricsGrid>
           
@@ -505,13 +507,13 @@ const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = ({
           <MetricsGrid>
             <MetricCard>
               <MetricLabel>Polling Rate</MetricLabel>
-              <MetricValue>{gamepad.pollingData.rate}</MetricValue>
+              <MetricValue>{gamepad.pollingData?.rate ?? 0}</MetricValue>
               <MetricUnit>Hz</MetricUnit>
             </MetricCard>
             
             <MetricCard>
               <MetricLabel>Average Interval</MetricLabel>
-              <MetricValue>{gamepad.pollingData.average.toFixed(2)}</MetricValue>
+              <MetricValue>{(gamepad.pollingData?.average ?? 0).toFixed(2)}</MetricValue>
               <MetricUnit>ms</MetricUnit>
             </MetricCard>
             

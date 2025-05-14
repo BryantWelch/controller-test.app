@@ -282,13 +282,13 @@ const GenericController: React.FC<GenericControllerProps> = ({ gamepad }) => {
           title="Left Stick" 
           xAxis={gamepad.axes[0]} 
           yAxis={gamepad.axes[1]} 
-          driftDetected={gamepad.stickDrift.leftStick.detected}
+          driftDetected={gamepad.stickDrift?.leftStick.detected ?? false}
         />
         <AnalogStickVisualizer 
           title="Right Stick" 
           xAxis={gamepad.axes[2]} 
           yAxis={gamepad.axes[3]} 
-          driftDetected={gamepad.stickDrift.rightStick.detected}
+          driftDetected={gamepad.stickDrift?.rightStick.detected ?? false}
         />
       </AnalogStickContainer>
       

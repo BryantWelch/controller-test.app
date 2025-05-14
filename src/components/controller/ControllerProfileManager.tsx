@@ -246,7 +246,7 @@ interface ControllerProfile {
 }
 
 interface ControllerProfileManagerProps {
-  gamepad: GamepadState;
+  gamepad: GamepadState | null;
   onLoadProfile: (profile: ControllerProfile) => void;
 }
 
@@ -254,17 +254,21 @@ const ControllerProfileManager: React.FC<ControllerProfileManagerProps> = ({
   gamepad,
   onLoadProfile
 }) => {
+  // Define all hooks at the top level, before any conditional returns
   const [profiles, setProfiles] = useState<ControllerProfile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingProfile, setEditingProfile] = useState<ControllerProfile | null>(null);
-  
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
   
   // Load profiles from localStorage on component mount
+  // This must be defined before any conditional returns
   useEffect(() => {
+    // Skip the effect if no gamepad is connected
+    if (!gamepad) return;
+    
     const storedProfiles = localStorage.getItem('controllerProfiles');
     if (storedProfiles) {
       try {
@@ -280,10 +284,22 @@ const ControllerProfileManager: React.FC<ControllerProfileManagerProps> = ({
           setActiveProfileId(matchingProfile.id);
         }
       } catch (error) {
-        console.error('Error parsing stored profiles:', error);
+        console.error('Error parsing profiles:', error);
       }
     }
-  }, [gamepad.id]);
+  }, [gamepad]);
+  
+  // Early return if no gamepad is connected
+  if (!gamepad) {
+    return (
+      <ProfileManagerContainer>
+        <ProfileTitle>Controller Profiles</ProfileTitle>
+        <div style={{ color: theme.colors.text, textAlign: 'center', padding: theme.space.lg }}>
+          No controller connected. Connect a controller to manage profiles.
+        </div>
+      </ProfileManagerContainer>
+    );
+  }
   
   const openCreateModal = () => {
     setModalMode('create');
@@ -320,10 +336,10 @@ const ControllerProfileManager: React.FC<ControllerProfileManagerProps> = ({
         name: formName,
         description: formDescription,
         controllerId: gamepad.id,
-        controllerType: gamepad.type,
+        controllerType: gamepad.type?.toString() || 'generic',
         deadZones: {
-          leftStick: gamepad.deadZones.leftStick,
-          rightStick: gamepad.deadZones.rightStick
+          leftStick: gamepad.deadZones?.leftStick || 0.05,
+          rightStick: gamepad.deadZones?.rightStick || 0.05
         },
         createdAt: now,
         updatedAt: now
@@ -340,8 +356,8 @@ const ControllerProfileManager: React.FC<ControllerProfileManagerProps> = ({
         name: formName,
         description: formDescription,
         deadZones: {
-          leftStick: gamepad.deadZones.leftStick,
-          rightStick: gamepad.deadZones.rightStick
+          leftStick: gamepad.deadZones?.leftStick ?? 0.05,
+          rightStick: gamepad.deadZones?.rightStick ?? 0.05
         },
         updatedAt: now
       };
@@ -482,9 +498,9 @@ const ControllerProfileManager: React.FC<ControllerProfileManagerProps> = ({
             <FormGroup>
               <FormLabel>Controller Settings</FormLabel>
               <ProfileDetails>
-                Left Stick Dead Zone: {gamepad.deadZones.leftStick.toFixed(2)}
+                Left Stick Dead Zone: {(gamepad.deadZones?.leftStick || 0.05).toFixed(2)}
                 <br />
-                Right Stick Dead Zone: {gamepad.deadZones.rightStick.toFixed(2)}
+                Right Stick Dead Zone: {(gamepad.deadZones?.rightStick || 0.05).toFixed(2)}
               </ProfileDetails>
             </FormGroup>
             
