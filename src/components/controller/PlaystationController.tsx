@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { GamepadState } from '../../hooks/useGamepad';
+import { GamepadState, ControllerType } from '../../hooks/useGamepad';
 import { theme } from '../../styles/theme';
 import AnalogStickVisualizer from './AnalogStickVisualizer';
+import { ReactComponent as PS4ControllerSvg } from '../../assets/ps4_dualshock4_modified.svg';
 
 const ControllerWrapper = styled.div`
   position: relative;
@@ -11,6 +12,7 @@ const ControllerWrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-top: -60px;
 `;
 
 const ControllerSvg = styled.svg`
@@ -57,24 +59,204 @@ const DPadButton = styled(motion.path)<{ pressed?: boolean }>`
 
 const AnalogStickContainer = styled.div`
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   width: 100%;
-  margin-top: ${theme.space.xl};
+  max-width: 600px;
+  margin-top: 0;
 `;
 
 interface PlaystationControllerProps {
   gamepad: GamepadState;
 }
 
+// Define styled components outside of the component to prevent recreation on each render
+const PS4SvgWrapper = styled.div`
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  position: relative;
+  transform: scale(1.2);
+  margin-bottom: 30px;
+  
+  svg {
+    width: 100%;
+    height: auto;
+  }
+`;
+
+// Create styled components for button overlays (not used directly but kept for future reference)
+const ButtonOverlay = styled(motion.div)<{ pressed?: boolean }>`
+  position: absolute;
+  background-color: ${props => props.pressed ? theme.colors.primary : 'transparent'};
+  border-radius: 50%;
+  opacity: ${props => props.pressed ? 0.7 : 0};
+  transition: opacity 0.1s ease, background-color 0.1s ease;
+  pointer-events: none;
+`;
+
+const DPadOverlay = styled(motion.div)<{ pressed?: boolean }>`
+  position: absolute;
+  background-color: ${props => props.pressed ? theme.colors.primary : 'transparent'};
+  opacity: ${props => props.pressed ? 0.7 : 0};
+  transition: opacity 0.1s ease, background-color 0.1s ease;
+  pointer-events: none;
+`;
+
+const AnalogStickOverlay = styled(motion.div)<{ x: number; y: number }>`
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: rgba(125, 252, 189, 0.3);
+  border: 2px solid ${theme.colors.primary};
+  transform: translate(${props => props.x * 10}px, ${props => props.y * 10}px);
+  transition: transform 0.05s ease-out;
+  pointer-events: none;
+`;
+
 const PlaystationController: React.FC<PlaystationControllerProps> = ({ gamepad }) => {
+  // Create a ref for the SVG element - must be at the top level
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  
+  // Define variables with safe defaults
+  const hasGamepad = !!gamepad;
+  const isPS4Controller = hasGamepad && (
+    gamepad.modelInfo?.model?.toLowerCase().includes('dualshock 4') || 
+    gamepad.id?.toLowerCase().includes('dualshock 4') || 
+    gamepad.id?.toLowerCase().includes('054c:09cc') || // PS4 controller USB vendor:product ID
+    gamepad.id?.toLowerCase().includes('054c:05c4')    // PS4 controller Bluetooth vendor:product ID
+  );
+  
   // PlayStation controller button mapping
   // 0: Cross, 1: Circle, 2: Square, 3: Triangle, 4: L1, 5: R1, 6: L2, 7: R2, 
-  // 8: Share, 9: Options, 10: L3, 11: R3, 
-  // 12: D-Up, 13: D-Down, 14: D-Left, 15: D-Right, 16: PS Button, 17: Touchpad
+  // 8: Share, 9: Options, 10: L3, 11: R3, 12: PS Button, 13: Touchpad
+  // 14-17: D-pad (Up, Right, Down, Left)
   
   // Axes mapping
   // 0: Left Stick X, 1: Left Stick Y, 2: Right Stick X, 3: Right Stick Y
   
+  // Use useEffect to update the SVG elements when gamepad state changes
+  useEffect(() => {
+    if (!svgRef.current || !isPS4Controller || !gamepad) return;
+    
+    const svg = svgRef.current;
+      
+    // Update face buttons
+    const crossButton = svg.querySelector('.face-button-cross');
+    if (crossButton) {
+      crossButton.setAttribute('fill', gamepad.buttons[0]?.pressed ? theme.colors.primary : '#333');
+    }
+      
+      const circleButton = svg.querySelector('.face-button-circle');
+      if (circleButton) {
+        circleButton.setAttribute('fill', gamepad.buttons[1]?.pressed ? theme.colors.primary : '#333');
+      }
+      
+      const squareButton = svg.querySelector('.face-button-square');
+      if (squareButton) {
+        squareButton.setAttribute('fill', gamepad.buttons[2]?.pressed ? theme.colors.primary : '#333');
+      }
+      
+      const triangleButton = svg.querySelector('.face-button-triangle');
+      if (triangleButton) {
+        triangleButton.setAttribute('fill', gamepad.buttons[3]?.pressed ? theme.colors.primary : '#333');
+      }
+      
+      // Update share/options buttons
+      const shareButton = svg.querySelector('.button-share');
+      if (shareButton) {
+        shareButton.setAttribute('fill', gamepad.buttons[8]?.pressed ? theme.colors.primary : '#333');
+      }
+      
+      const optionsButton = svg.querySelector('.button-options');
+      if (optionsButton) {
+        optionsButton.setAttribute('fill', gamepad.buttons[9]?.pressed ? theme.colors.primary : '#333');
+      }
+      
+      // Update PS button
+      const psButton = svg.querySelector('.button-ps');
+      if (psButton) {
+        psButton.setAttribute('fill', gamepad.buttons[16]?.pressed ? theme.colors.primary : '#333');
+      }
+      
+      // Update touchpad
+      const touchpad = svg.querySelector('.touchpad');
+      if (touchpad) {
+        touchpad.setAttribute('fill', gamepad.buttons[17]?.pressed ? theme.colors.primary : '#333');
+      }
+      
+      // Update D-pad - individual buttons
+      const dpadUp = svg.querySelector('.dpad-up');
+      if (dpadUp) {
+        dpadUp.setAttribute('fill', gamepad.buttons[12]?.pressed ? theme.colors.primary : '#333');
+      }
+      
+      const dpadDown = svg.querySelector('.dpad-down');
+      if (dpadDown) {
+        dpadDown.setAttribute('fill', gamepad.buttons[13]?.pressed ? theme.colors.primary : '#333');
+      }
+      
+      const dpadLeft = svg.querySelector('.dpad-left');
+      if (dpadLeft) {
+        dpadLeft.setAttribute('fill', gamepad.buttons[14]?.pressed ? theme.colors.primary : '#333');
+      }
+      
+      const dpadRight = svg.querySelector('.dpad-right');
+      if (dpadRight) {
+        dpadRight.setAttribute('fill', gamepad.buttons[15]?.pressed ? theme.colors.primary : '#333');
+      }
+      
+      // Update analog sticks
+      const leftStick = svg.querySelector('.left-analog-stick');
+      if (leftStick) {
+        leftStick.setAttribute('transform', 
+          `translate(${gamepad.axes[0] ? gamepad.axes[0] * 10 : 0}, ${gamepad.axes[1] ? gamepad.axes[1] * 10 : 0})`);
+      }
+      
+      const rightStick = svg.querySelector('.right-analog-stick');
+      if (rightStick) {
+        rightStick.setAttribute('transform', 
+          `translate(${gamepad.axes[2] ? gamepad.axes[2] * 10 : 0}, ${gamepad.axes[3] ? gamepad.axes[3] * 10 : 0})`);
+      }
+      
+  }, [gamepad, theme.colors.primary, isPS4Controller]); // Only re-run when gamepad state, theme, or controller type changes
+    
+  // Render different views based on conditions
+  if (!hasGamepad) {
+    return (
+      <ControllerWrapper>
+        <div>No controller connected</div>
+      </ControllerWrapper>
+    );
+  }
+  
+  if (isPS4Controller) {
+    return (
+      <ControllerWrapper>
+        <PS4SvgWrapper>
+          {/* Main controller SVG with ref for direct manipulation */}
+          <PS4ControllerSvg ref={svgRef} />
+        </PS4SvgWrapper>
+        
+        <AnalogStickContainer>
+          <AnalogStickVisualizer 
+            title="Left Stick"
+            xAxis={gamepad.axes[0] || 0}
+            yAxis={gamepad.axes[1] || 0}
+            driftDetected={gamepad.stickDrift?.leftStick?.detected || false}
+          />
+          <AnalogStickVisualizer 
+            title="Right Stick"
+            xAxis={gamepad.axes[2] || 0}
+            yAxis={gamepad.axes[3] || 0}
+            driftDetected={gamepad.stickDrift?.rightStick?.detected || false}
+          />
+        </AnalogStickContainer>
+      </ControllerWrapper>
+    );
+  }
+  
+  // Generic PlayStation controller rendering
   return (
     <ControllerWrapper>
       <ControllerSvg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
