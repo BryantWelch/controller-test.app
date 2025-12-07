@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { ControllerType, GamepadState } from '../../hooks/useGamepad';
+import { GamepadState } from '../../hooks/useGamepad';
+import { ControllerType } from '../../utils/gamepadUtils';
 import { theme } from '../../styles/theme';
 import XboxController from './XboxController';
 import PlaystationController from './PlaystationController';
@@ -66,7 +67,7 @@ interface ControllerDisplayProps {
   gamepad: GamepadState | null;
 }
 
-const ControllerDisplay: React.FC<ControllerDisplayProps> = ({ gamepad }) => {
+const ControllerDisplay: React.FC<ControllerDisplayProps> = memo(({ gamepad }) => {
   if (!gamepad || !gamepad.connected) {
     return (
       <ControllerContainer
@@ -121,6 +122,6 @@ const ControllerDisplay: React.FC<ControllerDisplayProps> = ({ gamepad }) => {
       {renderController()}
     </ControllerContainer>
   );
-};
+});
 
 export default ControllerDisplay;

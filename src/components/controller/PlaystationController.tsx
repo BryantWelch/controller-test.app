@@ -1,10 +1,11 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, memo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { GamepadState, ControllerType } from '../../hooks/useGamepad';
+import { GamepadState } from '../../hooks/useGamepad';
 import { theme } from '../../styles/theme';
 import AnalogStickVisualizer from './AnalogStickVisualizer';
 import { ReactComponent as PS4ControllerSvg } from '../../assets/ps4_dualshock4_modified.svg';
+import { ReactComponent as PS5ControllerSvg } from '../../assets/ps5_dualsense_modified.svg';
 
 const ControllerWrapper = styled.div`
   position: relative;
@@ -84,37 +85,8 @@ const PS4SvgWrapper = styled.div`
   }
 `;
 
-// Create styled components for button overlays (not used directly but kept for future reference)
-const ButtonOverlay = styled(motion.div)<{ pressed?: boolean }>`
-  position: absolute;
-  background-color: ${props => props.pressed ? theme.colors.primary : 'transparent'};
-  border-radius: 50%;
-  opacity: ${props => props.pressed ? 0.7 : 0};
-  transition: opacity 0.1s ease, background-color 0.1s ease;
-  pointer-events: none;
-`;
 
-const DPadOverlay = styled(motion.div)<{ pressed?: boolean }>`
-  position: absolute;
-  background-color: ${props => props.pressed ? theme.colors.primary : 'transparent'};
-  opacity: ${props => props.pressed ? 0.7 : 0};
-  transition: opacity 0.1s ease, background-color 0.1s ease;
-  pointer-events: none;
-`;
-
-const AnalogStickOverlay = styled(motion.div)<{ x: number; y: number }>`
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: rgba(125, 252, 189, 0.3);
-  border: 2px solid ${theme.colors.primary};
-  transform: translate(${props => props.x * 10}px, ${props => props.y * 10}px);
-  transition: transform 0.05s ease-out;
-  pointer-events: none;
-`;
-
-const PlaystationController: React.FC<PlaystationControllerProps> = ({ gamepad }) => {
+const PlaystationController: React.FC<PlaystationControllerProps> = memo(({ gamepad }) => {
   // Create a ref for the SVG element - must be at the top level
   const svgRef = useRef<SVGSVGElement | null>(null);
   
@@ -125,6 +97,14 @@ const PlaystationController: React.FC<PlaystationControllerProps> = ({ gamepad }
     gamepad.id?.toLowerCase().includes('dualshock 4') || 
     gamepad.id?.toLowerCase().includes('054c:09cc') || // PS4 controller USB vendor:product ID
     gamepad.id?.toLowerCase().includes('054c:05c4')    // PS4 controller Bluetooth vendor:product ID
+  );
+
+  const isPS5Controller = hasGamepad && (
+    gamepad.modelInfo?.id === 'ps5-dualsense' ||
+    gamepad.modelInfo?.name?.toLowerCase().includes('dualsense') ||
+    gamepad.modelInfo?.identifiers?.some((id: string) => id.toLowerCase().includes('dualsense') || id.toLowerCase().includes('ps5')) ||
+    gamepad.id?.toLowerCase().includes('054c:0ce6') || // DualSense Wireless Controller
+    gamepad.id?.toLowerCase().includes('054c:0df2')    // DualSense Edge Controller
   );
   
   // PlayStation controller button mapping
@@ -137,7 +117,7 @@ const PlaystationController: React.FC<PlaystationControllerProps> = ({ gamepad }
   
   // Use useEffect to update the SVG elements when gamepad state changes
   useEffect(() => {
-    if (!svgRef.current || !isPS4Controller || !gamepad) return;
+    if (!svgRef.current || !(isPS4Controller || isPS5Controller) || !gamepad) return;
     
     const svg = svgRef.current;
       
@@ -219,7 +199,7 @@ const PlaystationController: React.FC<PlaystationControllerProps> = ({ gamepad }
           `translate(${gamepad.axes[2] ? gamepad.axes[2] * 10 : 0}, ${gamepad.axes[3] ? gamepad.axes[3] * 10 : 0})`);
       }
       
-  }, [gamepad, theme.colors.primary, isPS4Controller]); // Only re-run when gamepad state, theme, or controller type changes
+  }, [gamepad, isPS4Controller, isPS5Controller]); // Only re-run when gamepad state or controller type changes
     
   // Render different views based on conditions
   if (!hasGamepad) {
@@ -230,7 +210,16 @@ const PlaystationController: React.FC<PlaystationControllerProps> = ({ gamepad }
     );
   }
   
-  if (isPS4Controller) {
+  if (isPS5Controller) {
+    return (
+      <ControllerWrapper>
+        <PS4SvgWrapper> {/* Assuming PS5 SVG is similar dimensions, can rename/adjust wrapper if needed */}
+          {/* Main controller SVG with ref for direct manipulation */}
+          <PS5ControllerSvg ref={svgRef} />
+        </PS4SvgWrapper>
+      </ControllerWrapper>
+    );
+  } else if (isPS4Controller) { // Added else if to prioritize PS5 if somehow both flags were true
     return (
       <ControllerWrapper>
         <PS4SvgWrapper>
@@ -451,6 +440,6 @@ const PlaystationController: React.FC<PlaystationControllerProps> = ({ gamepad }
       </AnalogStickContainer>
     </ControllerWrapper>
   );
-};
+});
 
 export default PlaystationController;

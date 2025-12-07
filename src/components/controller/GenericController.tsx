@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { GamepadState } from '../../hooks/useGamepad';
@@ -90,7 +90,7 @@ interface GenericControllerProps {
   gamepad: GamepadState;
 }
 
-const GenericController: React.FC<GenericControllerProps> = ({ gamepad }) => {
+const GenericController: React.FC<GenericControllerProps> = memo(({ gamepad }) => {
   return (
     <ControllerWrapper>
       <ControllerSvg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
@@ -305,6 +305,6 @@ const GenericController: React.FC<GenericControllerProps> = ({ gamepad }) => {
       </ButtonsContainer>
     </ControllerWrapper>
   );
-};
+});
 
 export default GenericController;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { GamepadState } from '../../hooks/useGamepad';
@@ -54,7 +54,7 @@ interface XboxControllerProps {
   gamepad: GamepadState;
 }
 
-const XboxController: React.FC<XboxControllerProps> = ({ gamepad }) => {
+const XboxController: React.FC<XboxControllerProps> = memo(({ gamepad }) => {
   // Xbox controller button mapping
   // 0: A, 1: B, 2: X, 3: Y, 4: LB, 5: RB, 6: LT, 7: RT, 
   // 8: Back, 9: Start, 10: LS, 11: RS, 
@@ -223,6 +223,6 @@ const XboxController: React.FC<XboxControllerProps> = ({ gamepad }) => {
       </AnalogStickContainer>
     </ControllerWrapper>
   );
-};
+});
 
 export default XboxController;

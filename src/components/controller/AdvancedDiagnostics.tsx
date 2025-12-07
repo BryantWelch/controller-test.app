@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-// import { motion } from 'framer-motion'; // Commented out to fix ESLint warning
 import { GamepadState } from '../../hooks/useGamepad';
 import { theme } from '../../styles/theme';
 
@@ -292,21 +291,89 @@ const InfoBox = styled.div`
   font-size: ${theme.fontSizes.sm};
 `;
 
+const CopyButton = styled.button`
+  padding: ${theme.space.sm} ${theme.space.md};
+  border-radius: ${theme.borderRadius.md};
+  border: 1px solid ${theme.colors.primary};
+  background-color: transparent;
+  color: ${theme.colors.primary};
+  font-size: ${theme.fontSizes.sm};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: ${theme.space.md};
+  
+  &:hover {
+    background-color: ${theme.colors.primary};
+    color: ${theme.colors.backgroundDark};
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const CopySuccess = styled.span`
+  color: ${theme.colors.primary};
+  font-size: ${theme.fontSizes.sm};
+  margin-left: ${theme.space.sm};
+`;
+
 interface AdvancedDiagnosticsProps {
   gamepad: GamepadState;
   updateDeadZones: (leftStick: number, rightStick: number) => void;
 }
 
-const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = ({ 
+const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = memo(({ 
   gamepad,
   updateDeadZones
 }) => {
   const [activeTab, setActiveTab] = useState('stickDrift');
   const [leftDeadZone, setLeftDeadZone] = useState(gamepad.deadZones?.leftStick ?? 0.05);
   const [rightDeadZone, setRightDeadZone] = useState(gamepad.deadZones?.rightStick ?? 0.05);
+  const [copySuccess, setCopySuccess] = useState(false);
   
-  // Handle dead zone changes
-  const handleDeadZoneChange = (stick: 0 | 1, value: number) => {
+  // Copy diagnostics data to clipboard
+  const copyDiagnostics = useCallback(() => {
+    const diagnosticsData = {
+      controller: {
+        name: gamepad.modelInfo?.name || 'Unknown',
+        manufacturer: gamepad.modelInfo?.manufacturer || 'Unknown',
+        type: gamepad.type,
+        id: gamepad.id,
+        mapping: gamepad.mapping,
+      },
+      stickDrift: {
+        leftStick: gamepad.stickDrift?.leftStick,
+        rightStick: gamepad.stickDrift?.rightStick,
+      },
+      deadZones: gamepad.deadZones,
+      latency: {
+        current: gamepad.latencyData?.currentLatency?.toFixed(2) + 'ms',
+        average: gamepad.latencyData?.averageLatency?.toFixed(2) + 'ms',
+        samples: gamepad.latencyData?.samples?.length || 0,
+      },
+      polling: {
+        rate: gamepad.pollingData?.rate + 'Hz',
+      },
+      browser: {
+        name: gamepad.browserCompatibility.name,
+        version: gamepad.browserCompatibility.version,
+        fullSupport: gamepad.browserCompatibility.fullSupport,
+      },
+      timestamp: new Date().toISOString(),
+    };
+    
+    navigator.clipboard.writeText(JSON.stringify(diagnosticsData, null, 2))
+      .then(() => {
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      })
+      .catch(err => console.error('Failed to copy:', err));
+  }, [gamepad]);
+  
+  // Handle dead zone changes - memoized to prevent unnecessary re-renders
+  const handleDeadZoneChange = useCallback((stick: 0 | 1, value: number) => {
     if (stick === 0) {
       setLeftDeadZone(value);
       updateDeadZones(value, rightDeadZone);
@@ -314,21 +381,28 @@ const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = ({
       setRightDeadZone(value);
       updateDeadZones(leftDeadZone, value);
     }
-  };
+  }, [leftDeadZone, rightDeadZone, updateDeadZones]);
   
-  // Normalize latency data for graph
-  const normalizeLatencyData = (samples: number[]) => {
+  // Normalize latency data for graph - memoized to prevent recalculation on every render
+  const normalizedLatencyData = useMemo(() => {
+    const samples = gamepad.latencyData?.samples ?? [];
     if (samples.length === 0) return [];
     
     const maxLatency = Math.max(...samples, 50); // At least 50ms for scale
     return samples.map(sample => (sample / maxLatency) * 80); // 80% of graph height
-  };
-  
-  const normalizedLatencyData = normalizeLatencyData(gamepad.latencyData?.samples ?? []);
+  }, [gamepad.latencyData?.samples]);
   
   return (
     <DiagnosticsContainer>
-      <DiagnosticsTitle>Advanced Diagnostics</DiagnosticsTitle>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.space.md }}>
+        <DiagnosticsTitle style={{ marginBottom: 0 }}>Advanced Diagnostics</DiagnosticsTitle>
+        <div>
+          <CopyButton onClick={copyDiagnostics}>
+            📋 Copy Diagnostics
+          </CopyButton>
+          {copySuccess && <CopySuccess>✓ Copied!</CopySuccess>}
+        </div>
+      </div>
       
       <TabsContainer>
         <Tab 
@@ -473,6 +547,16 @@ const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = ({
             </MetricCard>
             
             <MetricCard>
+              <MetricLabel>Min / Max</MetricLabel>
+              <MetricValue>
+                {gamepad.latencyData?.samples?.length 
+                  ? `${Math.min(...gamepad.latencyData.samples).toFixed(0)} / ${Math.max(...gamepad.latencyData.samples).toFixed(0)}`
+                  : '- / -'}
+              </MetricValue>
+              <MetricUnit>ms</MetricUnit>
+            </MetricCard>
+            
+            <MetricCard>
               <MetricLabel>Samples</MetricLabel>
               <MetricValue>{gamepad.latencyData?.samples?.length ?? 0}</MetricValue>
             </MetricCard>
@@ -513,7 +597,7 @@ const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = ({
             
             <MetricCard>
               <MetricLabel>Average Interval</MetricLabel>
-              <MetricValue>{(gamepad.pollingData?.average ?? 0).toFixed(2)}</MetricValue>
+              <MetricValue>{(gamepad.pollingData?.rate ? (1000 / gamepad.pollingData.rate) : 0).toFixed(2)}</MetricValue>
               <MetricUnit>ms</MetricUnit>
             </MetricCard>
             
@@ -549,6 +633,6 @@ const AdvancedDiagnostics: React.FC<AdvancedDiagnosticsProps> = ({
       )}
     </DiagnosticsContainer>
   );
-};
+});
 
 export default AdvancedDiagnostics;

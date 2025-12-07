@@ -1,13 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGamepad } from '../hooks/useGamepad';
+import { useWebHID } from '../hooks/useWebHID';
+import { useSoundFeedback } from '../hooks/useSoundFeedback';
 import { theme } from '../styles/theme';
 import ControllerDisplay from '../components/controller/ControllerDisplay';
 import HapticFeedbackTester from '../components/controller/HapticFeedbackTester';
 import AdvancedDiagnostics from '../components/controller/AdvancedDiagnostics';
 import ControllerProfileManager from '../components/controller/ControllerProfileManager';
 import ControllerIdentifierTest from '../components/controller/ControllerIdentifierTest';
+import ButtonActivityIndicator from '../components/controller/ButtonActivityIndicator';
+import ConnectionStatus from '../components/controller/ConnectionStatus';
+import GamepadSelector from '../components/controller/GamepadSelector';
+import MotionSensors from '../components/controller/MotionSensors';
+import TouchpadVisualizer from '../components/controller/TouchpadVisualizer';
+import BatteryIndicator from '../components/controller/BatteryIndicator';
+import LEDController from '../components/controller/LEDController';
+import ButtonPressCounter from '../components/controller/ButtonPressCounter';
+import SoundSettings, { SoundSettingsState } from '../components/controller/SoundSettings';
+import { exportControllerDataUtil } from '../utils/controllerUtils';
+import BrowserCompatibilityInfo from '../components/common/BrowserCompatibilityInfo';
 
 const TestContainer = styled.div`
   display: flex;
@@ -171,35 +184,6 @@ const FeatureTag = styled.span`
   font-weight: 600;
 `;
 
-const InfoContainer = styled.div`
-  display: flex;
-  align-items: center;
-  margin-top: ${theme.space.md};
-  padding: ${theme.space.sm} ${theme.space.md};
-  background-color: ${theme.colors.backgroundDark};
-  border-radius: ${theme.borderRadius.md};
-`;
-
-const InfoIcon = styled.div`
-  font-size: ${theme.fontSizes.lg};
-  margin-right: ${theme.space.sm};
-`;
-
-const InfoText = styled.div`
-  font-size: ${theme.fontSizes.sm};
-  color: ${theme.colors.text};
-`;
-
-const StatusBadge = styled.div<{ success?: boolean }>`
-  display: inline-block;
-  margin-left: ${theme.space.sm};
-  padding: ${theme.space.xs} ${theme.space.sm};
-  border-radius: ${theme.borderRadius.sm};
-  font-size: ${theme.fontSizes.xs};
-  background-color: ${props => props.success ? 'rgba(125, 252, 189, 0.2)' : 'rgba(244, 67, 54, 0.2)'};
-  color: ${props => props.success ? theme.colors.primary : '#F44336'};
-`;
-
 const TabsContainer = styled.div`
   display: flex;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -277,15 +261,53 @@ const TabContent = styled(motion.div)`
   padding: ${theme.space.md};
 `;
 
-type TabType = 'visualization' | 'diagnostics' | 'haptic' | 'profiles' | 'identifier';
+type TabType = 'visualization' | 'diagnostics' | 'haptic' | 'profiles' | 'identifier' | 'advanced';
 
 const Test: React.FC = () => {
   const { 
+    gamepads,
     activeGamepad, 
+    setGamepadActive,
     isSupported,
     updateDeadZones,
     triggerHapticFeedback
   } = useGamepad();
+  
+  // WebHID for advanced features (motion, touchpad, LED, battery)
+  const webHID = useWebHID();
+  
+  // Sound feedback settings
+  const [soundSettings, setSoundSettings] = useState<SoundSettingsState>({
+    enabled: false,
+    volume: 0.3,
+    buttonSound: 'click',
+    stickSound: false,
+  });
+  
+  const { playButtonSound } = useSoundFeedback(soundSettings);
+  
+  // Track previous button states for sound feedback
+  const prevButtonsRef = useRef<boolean[]>([]);
+  
+  // Play sound on button press
+  useEffect(() => {
+    if (!activeGamepad || !soundSettings.enabled) return;
+    
+    const currentButtons = activeGamepad.buttons.map(b => b.pressed);
+    
+    // Check for new presses
+    currentButtons.forEach((pressed, index) => {
+      if (pressed && !prevButtonsRef.current[index]) {
+        playButtonSound();
+      }
+    });
+    
+    prevButtonsRef.current = currentButtons;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGamepad?.buttons, soundSettings.enabled, playButtonSound]);
+  
+  // Get all connected gamepads
+  const connectedGamepads = gamepads();
   
   const [activeTab, setActiveTab] = useState<TabType>('visualization');
   const [showNotification, setShowNotification] = useState<boolean>(false);
@@ -305,55 +327,7 @@ const Test: React.FC = () => {
     setActiveTab(tab);
   };
   
-  const exportControllerData = () => {
-    if (!activeGamepad) return;
-    
-    const exportData = {
-      controller: {
-        id: activeGamepad.id,
-        type: activeGamepad.type,
-        mapping: activeGamepad.mapping,
-        model: activeGamepad.modelInfo ? activeGamepad.modelInfo.name : 'Unknown',
-        manufacturer: activeGamepad.modelInfo ? activeGamepad.modelInfo.manufacturer : 'Unknown',
-      },
-      buttons: activeGamepad.buttons.map((button, index) => ({
-        index,
-        pressed: button.pressed,
-        value: button.value
-      })),
-      axes: activeGamepad.axes.map((axis, index) => ({
-        index,
-        value: axis
-      })),
-      stickDrift: activeGamepad.stickDrift ?? {
-        leftStick: { detected: false, value: { x: 0, y: 0 } },
-        rightStick: { detected: false, value: { x: 0, y: 0 } }
-      },
-      diagnostics: {
-        pollingRate: activeGamepad.pollingData?.rate ?? 0,
-        latency: activeGamepad.latencyData?.averageLatency ?? 0,
-        browser: `${activeGamepad.browserCompatibility?.name ?? 'Unknown'} ${activeGamepad.browserCompatibility?.version ?? ''}`
-      },
-      timestamp: new Date().toISOString()
-    };
-    
-    const jsonString = JSON.stringify(exportData, null, 2);
-    
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `controller-data-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-    document.body.appendChild(a);
-    a.click();
-    
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 100);
-  };
-  
-  const handleLoadProfile = (profile: { deadZones?: { leftStick: number | string, rightStick: number | string } }) => {
+  const handleLoadProfile = useCallback((profile: { deadZones?: { leftStick: number | string, rightStick: number | string } }) => {
     if (profile && profile.deadZones) {
       const leftDeadZone = typeof profile.deadZones.leftStick === 'string' 
         ? parseFloat(profile.deadZones.leftStick) 
@@ -365,21 +339,7 @@ const Test: React.FC = () => {
         
       updateDeadZones(leftDeadZone, rightDeadZone);
     }
-  };
-  
-  const BrowserCompatibilityInfo = () => (
-    <InfoContainer>
-      <InfoIcon>
-        <i className="fas fa-browser" />
-      </InfoIcon>
-      <InfoText>
-        <div>Browser Compatibility</div>
-        <StatusBadge success={isSupported}>
-          {isSupported ? 'Supported' : 'Not Supported'}
-        </StatusBadge>
-      </InfoText>
-    </InfoContainer>
-  );
+  }, [updateDeadZones]);
 
   const renderContent = () => {
     if (!isSupported) {
@@ -405,7 +365,7 @@ const Test: React.FC = () => {
           <MessageText>
             Xbox, PlayStation, Nintendo Switch Pro, and most other USB or Bluetooth controllers.
           </MessageText>
-          <BrowserCompatibilityInfo />
+          <BrowserCompatibilityInfo isSupported={isSupported} />
         </NoControllerMessage>
       );
     }
@@ -442,7 +402,7 @@ const Test: React.FC = () => {
               Once connected, your controller should be automatically detected and displayed here.
             </MessageText>
             
-            <BrowserCompatibilityInfo />
+            <BrowserCompatibilityInfo isSupported={isSupported} />
           </NoControllerMessage>
         </>
       );
@@ -459,6 +419,13 @@ const Test: React.FC = () => {
           Test your gamepad's buttons, sticks, and triggers. Diagnose issues like stick drift and input latency.
         </Subtitle>
         
+        {/* Gamepad selector for multiple controllers */}
+        <GamepadSelector 
+          gamepads={connectedGamepads}
+          activeIndex={activeGamepad?.index ?? 0}
+          onSelect={setGamepadActive}
+        />
+        
         <ControllerSection
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -469,8 +436,12 @@ const Test: React.FC = () => {
               <h2>
                 {activeGamepad?.modelInfo?.name || 'Generic Controller'}
               </h2>
-              <div>
-                {activeGamepad?.type}
+              <div style={{ display: 'flex', alignItems: 'center', gap: theme.space.md, marginTop: theme.space.xs }}>
+                <span>{activeGamepad?.type}</span>
+                <ConnectionStatus 
+                  connected={activeGamepad?.connected ?? false} 
+                  pollingRate={activeGamepad?.pollingData?.rate}
+                />
               </div>
             </ControllerInfo>
           </ControllerHeader>
@@ -505,6 +476,12 @@ const Test: React.FC = () => {
               onClick={() => safeSetActiveTab('identifier')}
             >
               Identifier
+            </Tab>
+            <Tab 
+              active={activeTab === 'advanced'} 
+              onClick={() => safeSetActiveTab('advanced')}
+            >
+              Advanced
             </Tab>
           </TabsContainer>
           
@@ -552,6 +529,8 @@ const Test: React.FC = () => {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
+                <ButtonActivityIndicator gamepad={activeGamepad} />
+                <div style={{ height: theme.space.md }} />
                 <ControllerDisplay gamepad={activeGamepad} />
                 
                 <ControllerDetailsCard>
@@ -659,17 +638,69 @@ const Test: React.FC = () => {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <ControllerIdentifierTest />
+                <ControllerIdentifierTest gamepad={activeGamepad} />
+              </TabContent>
+            )}
+            
+            {activeTab === 'advanced' && activeGamepad && (
+              <TabContent
+                key="advanced"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {/* Sound Settings */}
+                <SoundSettings 
+                  settings={soundSettings}
+                  onSettingsChange={setSoundSettings}
+                  onTestSound={playButtonSound}
+                />
+                
+                {/* Button Press Counter */}
+                <ButtonPressCounter 
+                  buttons={activeGamepad.buttons}
+                  controllerType={activeGamepad.type}
+                />
+                
+                {/* Battery Indicator (if WebHID connected) */}
+                {webHID.connected && (
+                  <div style={{ marginBottom: theme.space.lg }}>
+                    <h3 style={{ color: theme.colors.primary, marginBottom: theme.space.md }}>Battery Status</h3>
+                    <BatteryIndicator battery={webHID.battery} />
+                  </div>
+                )}
+                
+                {/* Motion Sensors */}
+                <MotionSensors 
+                  motion={webHID.motion}
+                  connected={webHID.connected}
+                  supported={webHID.supported}
+                  onConnect={webHID.connect}
+                  onResetOrientation={webHID.resetOrientation}
+                />
+                
+                {/* Touchpad */}
+                <TouchpadVisualizer 
+                  touchpad={webHID.touchpad}
+                  connected={webHID.connected}
+                />
+                
+                {/* LED Controller */}
+                <LEDController 
+                  led={webHID.led}
+                  connected={webHID.connected}
+                  onSetColor={webHID.setLEDColor}
+                />
               </TabContent>
             )}
           </AnimatePresence>
           
           <ButtonContainer>
             <ActionButton 
-              onClick={exportControllerData}
+              onClick={() => exportControllerDataUtil(activeGamepad)}
               whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
+              whileTap={{ scale: 0.95 }}>
               <span>
                 <i className="fas fa-download" />
               </span>

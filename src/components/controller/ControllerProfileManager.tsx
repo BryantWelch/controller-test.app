@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { theme } from '../../styles/theme';
@@ -250,7 +250,7 @@ interface ControllerProfileManagerProps {
   onLoadProfile: (profile: ControllerProfile) => void;
 }
 
-const ControllerProfileManager: React.FC<ControllerProfileManagerProps> = ({ 
+const ControllerProfileManager: React.FC<ControllerProfileManagerProps> = memo(({ 
   gamepad,
   onLoadProfile
 }) => {
@@ -520,6 +520,6 @@ const ControllerProfileManager: React.FC<ControllerProfileManagerProps> = ({
       )}
     </ProfileManagerContainer>
   );
-};
+});
 
 export default ControllerProfileManager;

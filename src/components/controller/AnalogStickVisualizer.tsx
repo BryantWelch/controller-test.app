@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, memo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { theme } from '../../styles/theme';
@@ -61,7 +61,7 @@ interface AnalogStickVisualizerProps {
   driftDetected: boolean;
 }
 
-const AnalogStickVisualizer: React.FC<AnalogStickVisualizerProps> = ({
+const AnalogStickVisualizer: React.FC<AnalogStickVisualizerProps> = memo(({
   title,
   xAxis,
   yAxis,
@@ -215,6 +215,18 @@ const AnalogStickVisualizer: React.FC<AnalogStickVisualizerProps> = ({
       </AxisValues>
     </VisualizerContainer>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison - only re-render if values changed significantly
+  const xDiff = Math.abs(prevProps.xAxis - nextProps.xAxis);
+  const yDiff = Math.abs(prevProps.yAxis - nextProps.yAxis);
+  const threshold = 0.005; // Only re-render if axis moved more than 0.5%
+  
+  return (
+    prevProps.title === nextProps.title &&
+    prevProps.driftDetected === nextProps.driftDetected &&
+    xDiff < threshold &&
+    yDiff < threshold
+  );
+});
 
 export default AnalogStickVisualizer;

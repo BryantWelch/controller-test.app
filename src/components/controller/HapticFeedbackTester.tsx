@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { GamepadState } from '../../hooks/useGamepad';
+import { HapticFeedbackOptions } from '../../hooks/customHooks/useHapticFeedback';
 import { theme } from '../../styles/theme';
 
 const HapticContainer = styled.div`
@@ -160,7 +161,7 @@ const PatternButton = styled(motion.button)<{ active: boolean }>`
 
 interface HapticFeedbackTesterProps {
   gamepad: GamepadState;
-  triggerHapticFeedback: (duration: number, strongMagnitude: number, weakMagnitude: number) => boolean;
+  triggerHapticFeedback: (options: HapticFeedbackOptions) => Promise<boolean>;
 }
 
 interface HapticPattern {
@@ -173,7 +174,66 @@ interface HapticPattern {
   }>;
 }
 
-const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({ 
+// Predefined haptic patterns - defined outside component to avoid recreation on every render
+const HAPTIC_PATTERNS: HapticPattern[] = [
+  {
+    name: 'Pulse',
+    sequence: [
+      { duration: 200, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+      { duration: 200, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 200 },
+      { duration: 200, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+    ]
+  },
+  {
+    name: 'Escalating',
+    sequence: [
+      { duration: 150, strongMagnitude: 0.2, weakMagnitude: 0.2, delay: 0 },
+      { duration: 150, strongMagnitude: 0.4, weakMagnitude: 0.4, delay: 200 },
+      { duration: 150, strongMagnitude: 0.6, weakMagnitude: 0.6, delay: 200 },
+      { duration: 150, strongMagnitude: 0.8, weakMagnitude: 0.8, delay: 200 },
+      { duration: 150, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 200 },
+    ]
+  },
+  {
+    name: 'Rumble',
+    sequence: [
+      { duration: 1000, strongMagnitude: 0.8, weakMagnitude: 0.8, delay: 0 },
+    ]
+  },
+  {
+    name: 'SOS',
+    sequence: [
+      { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+      { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
+      { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+      { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
+      { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+      { duration: 0, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 300 },
+      { duration: 300, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+      { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
+      { duration: 300, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+      { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
+      { duration: 300, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+      { duration: 0, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 300 },
+      { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+      { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
+      { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+      { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
+      { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
+    ]
+  },
+  {
+    name: 'Alternating',
+    sequence: [
+      { duration: 300, strongMagnitude: 1.0, weakMagnitude: 0.0, delay: 0 },
+      { duration: 300, strongMagnitude: 0.0, weakMagnitude: 1.0, delay: 50 },
+      { duration: 300, strongMagnitude: 1.0, weakMagnitude: 0.0, delay: 50 },
+      { duration: 300, strongMagnitude: 0.0, weakMagnitude: 1.0, delay: 50 },
+    ]
+  }
+];
+
+const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = memo(({ 
   gamepad, 
   triggerHapticFeedback 
 }) => {
@@ -184,70 +244,6 @@ const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   
   const isSupported = gamepad.hapticCapabilities.supported;
-  
-  // Predefined haptic patterns
-  const hapticPatterns: HapticPattern[] = [
-    {
-      name: 'Pulse',
-      sequence: [
-        { duration: 200, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
-        { duration: 200, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 200 },
-        { duration: 200, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
-      ]
-    },
-    {
-      name: 'Escalating',
-      sequence: [
-        { duration: 150, strongMagnitude: 0.2, weakMagnitude: 0.2, delay: 0 },
-        { duration: 150, strongMagnitude: 0.4, weakMagnitude: 0.4, delay: 200 },
-        { duration: 150, strongMagnitude: 0.6, weakMagnitude: 0.6, delay: 200 },
-        { duration: 150, strongMagnitude: 0.8, weakMagnitude: 0.8, delay: 200 },
-        { duration: 150, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 200 },
-      ]
-    },
-    {
-      name: 'Rumble',
-      sequence: [
-        { duration: 1000, strongMagnitude: 0.8, weakMagnitude: 0.8, delay: 0 },
-      ]
-    },
-    {
-      name: 'SOS',
-      sequence: [
-        // S (3 short pulses)
-        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
-        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
-        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
-        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
-        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
-        // Pause between letters
-        { duration: 0, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 300 },
-        // O (3 long pulses)
-        { duration: 300, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
-        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
-        { duration: 300, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
-        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
-        { duration: 300, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
-        // Pause between letters
-        { duration: 0, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 300 },
-        // S (3 short pulses)
-        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
-        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
-        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
-        { duration: 100, strongMagnitude: 0.0, weakMagnitude: 0.0, delay: 100 },
-        { duration: 100, strongMagnitude: 1.0, weakMagnitude: 1.0, delay: 0 },
-      ]
-    },
-    {
-      name: 'Alternating',
-      sequence: [
-        { duration: 300, strongMagnitude: 1.0, weakMagnitude: 0.0, delay: 0 },
-        { duration: 300, strongMagnitude: 0.0, weakMagnitude: 1.0, delay: 50 },
-        { duration: 300, strongMagnitude: 1.0, weakMagnitude: 0.0, delay: 50 },
-        { duration: 300, strongMagnitude: 0.0, weakMagnitude: 1.0, delay: 50 },
-      ]
-    }
-  ];
   
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [feedbackSuccess, setFeedbackSuccess] = useState(false);
@@ -262,10 +258,10 @@ const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({
     }
   }, [feedbackVisible]);
 
-  const handleTriggerHaptic = () => {
-    const result = triggerHapticFeedback(duration, strongMagnitude, weakMagnitude);
+  const handleTestVibration = async () => {
+    const success = await triggerHapticFeedback({ duration, strongMagnitude, weakMagnitude });
     
-    if (result) {
+    if (success) {
       setFeedbackMessage('Haptic feedback successfully triggered!');
       setFeedbackSuccess(true);
     } else {
@@ -276,17 +272,17 @@ const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({
     setFeedbackVisible(true);
   };
   
-  const playHapticPattern = async (pattern: HapticPattern) => {
+  const playPattern = async (pattern: HapticPattern) => {
     if (isPlaying) return;
     
     setIsPlaying(true);
     setActivePattern(pattern.name);
     
-    for (const step of pattern.sequence) {
-      triggerHapticFeedback(step.duration, step.strongMagnitude, step.weakMagnitude);
+    for (const effect of pattern.sequence) {
+      await triggerHapticFeedback({ duration: effect.duration, strongMagnitude: effect.strongMagnitude, weakMagnitude: effect.weakMagnitude });
       
       // Wait for the duration plus any delay
-      await new Promise(resolve => setTimeout(resolve, step.duration + step.delay));
+      await new Promise(resolve => setTimeout(resolve, effect.duration + effect.delay));
     }
     
     setIsPlaying(false);
@@ -378,7 +374,7 @@ const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({
         <HapticButton
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={handleTriggerHaptic}
+          onClick={handleTestVibration}
           disabled={isPlaying}
         >
           Test Vibration
@@ -388,7 +384,7 @@ const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({
           variant="strong"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => triggerHapticFeedback(300, 1.0, 0.0)}
+          onClick={async () => await triggerHapticFeedback({ duration: 300, strongMagnitude: 1.0, weakMagnitude: 0.0 })}
           disabled={isPlaying}
         >
           Strong Only
@@ -398,7 +394,7 @@ const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({
           variant="weak"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => triggerHapticFeedback(300, 0.0, 1.0)}
+          onClick={async () => await triggerHapticFeedback({ duration: 300, strongMagnitude: 0.0, weakMagnitude: 1.0 })}
           disabled={isPlaying}
         >
           Weak Only
@@ -411,13 +407,13 @@ const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({
       </HapticDescription>
       
       <ButtonsContainer>
-        {hapticPatterns.map((pattern) => (
+        {HAPTIC_PATTERNS.map((pattern) => (
           <PatternButton
             key={pattern.name}
             active={activePattern === pattern.name}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => playHapticPattern(pattern)}
+            onClick={() => playPattern(pattern)}
             disabled={isPlaying && activePattern !== pattern.name}
           >
             {pattern.name}
@@ -426,6 +422,6 @@ const HapticFeedbackTester: React.FC<HapticFeedbackTesterProps> = ({
       </ButtonsContainer>
     </HapticContainer>
   );
-};
+});
 
 export default HapticFeedbackTester;
