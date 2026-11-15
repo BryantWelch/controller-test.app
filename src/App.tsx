@@ -1,30 +1,20 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from 'styled-components';
-import { theme } from './styles/theme';
-import GlobalStyles from './styles/globalStyles';
-import Layout from './components/layout/Layout';
-import Home from './pages/Home';
-import Test from './pages/Test';
-import About from './pages/About';
-import Privacy from './pages/Privacy';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { Shell } from './components/Shell'
+import { Tester } from './components/Tester'
+import { Privacy } from './pages/Privacy'
 
-function App() {
+export function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <GlobalStyles />
-      <Router>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/test" element={<Test />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/privacy" element={<Privacy />} />
-          </Routes>
-        </Layout>
-      </Router>
-    </ThemeProvider>
-  );
+    <BrowserRouter>
+      <Shell>
+        <Routes>
+          <Route path="/" element={<Tester />} />
+          <Route path="/test" element={<Navigate to="/" replace />} />
+          <Route path="/about" element={<Navigate to="/" replace />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Shell>
+    </BrowserRouter>
+  )
 }
-
-export default App;

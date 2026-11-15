@@ -1,0 +1,81 @@
+.button-history-bar {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--raise);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+}
+
+.button-history-label {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.button-history-count {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+}
+
+.button-history-track {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.button-history-chip {
+  flex: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(125, 252, 189, 0.45);
+  background: rgba(125, 252, 189, 0.12);
+  color: var(--text);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.button-history-empty {
+  margin: 0;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.button-history-clear {
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mint);
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button-history-clear:hover:not(:disabled) {
+  background: rgba(125, 252, 189, 0.08);
+}
+
+.button-history-clear:disabled {
+  color: var(--muted);
+  cursor: default;
+}

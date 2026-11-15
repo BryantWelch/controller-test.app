@@ -1,7 +1,7 @@
 {
   "short_name": "Controller Test",
   "name": "Controller Test App",
-  "description": "A modern web application for testing game controllers with real-time visual feedback and diagnostics",
+  "description": "Test Xbox, PlayStation, and Nintendo controllers in your browser. Check buttons, sticks, triggers, stick drift, and rumble. Nothing leaves your machine.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -21,6 +21,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#001209",
-  "background_color": "#001209"
+  "theme_color": "#07110c",
+  "background_color": "#07110c"
 }
