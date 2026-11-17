@@ -114,6 +114,18 @@ function ExternalIcon() {
   )
 }
 
+function canHover() {
+  return window.matchMedia('(hover: hover) and (pointer: fine)').matches
+}
+
+function MenuGlyph({ open }: { open: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+    </svg>
+  )
+}
+
 function moveLinkFocus(current: HTMLElement, key: string) {
   if (key !== 'ArrowDown' && key !== 'ArrowUp') return
   const links = Array.from(current.querySelectorAll<HTMLAnchorElement>('a'))
@@ -125,27 +137,42 @@ function moveLinkFocus(current: HTMLElement, key: string) {
 
 export function SiteNav() {
   const [open, setOpen] = useState<OpenMenu | null>(null)
-  const navRef = useRef<HTMLElement>(null)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const menusRef = useRef<HTMLElement>(null)
+  const toggleRef = useRef<HTMLButtonElement>(null)
   const openRef = useRef(open)
+  const mobileOpenRef = useRef(mobileOpen)
   const closeTimer = useRef<number | undefined>(undefined)
   const buttonRefs = useRef(new Map<string, HTMLButtonElement>())
 
   openRef.current = open
+  mobileOpenRef.current = mobileOpen
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.key !== 'Escape' || !openRef.current) return
-      event.preventDefault()
-      const id = openRef.current.id
-      setOpen(null)
-      buttonRefs.current.get(id)?.focus()
+      if (event.key !== 'Escape') return
+      if (openRef.current) {
+        event.preventDefault()
+        const id = openRef.current.id
+        setOpen(null)
+        buttonRefs.current.get(id)?.focus()
+        return
+      }
+      if (mobileOpenRef.current) {
+        event.preventDefault()
+        setMobileOpen(false)
+        toggleRef.current?.focus()
+      }
     }
 
     function onPointerDown(event: PointerEvent) {
-      if (!openRef.current) return
+      if (!openRef.current && !mobileOpenRef.current) return
       const target = event.target
-      if (target instanceof Node && navRef.current?.contains(target)) return
+      if (!(target instanceof Node)) return
+      if (menusRef.current?.contains(target)) return
+      if (toggleRef.current?.contains(target)) return
       setOpen(null)
+      setMobileOpen(false)
     }
 
     document.addEventListener('keydown', onKey)
@@ -157,7 +184,26 @@ export function SiteNav() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!mobileOpen) return
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [mobileOpen])
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 960px)')
+    const onChange = () => {
+      if (!query.matches) setMobileOpen(false)
+    }
+    query.addEventListener('change', onChange)
+    return () => query.removeEventListener('change', onChange)
+  }, [])
+
   function hoverOpen(id: string) {
+    if (!canHover()) return
     window.clearTimeout(closeTimer.current)
     setOpen((current) => {
       if (current?.pinned) return current
@@ -166,6 +212,7 @@ export function SiteNav() {
   }
 
   function hoverLeave(id: string) {
+    if (!canHover()) return
     window.clearTimeout(closeTimer.current)
     closeTimer.current = window.setTimeout(() => {
       setOpen((current) => {
@@ -191,10 +238,27 @@ export function SiteNav() {
 
   return (
     <header className="topbar site-nav">
+      {mobileOpen ? (
+        <button
+          type="button"
+          className="nav-backdrop"
+          tabIndex={-1}
+          aria-label="Close menu"
+          onClick={() => {
+            setOpen(null)
+            setMobileOpen(false)
+          }}
+        />
+      ) : null}
       <Link to="/" className="brand site-brand">
         Controller Test
       </Link>
-      <nav className="site-nav-menus" aria-label="Controllers and tools" ref={navRef}>
+      <nav
+        id="site-nav-menus"
+        className={mobileOpen ? 'site-nav-menus is-open' : 'site-nav-menus'}
+        aria-label="Controllers and tools"
+        ref={menusRef}
+      >
         {menus.map((menu) => {
           const expanded = open?.id === menu.id
           return (
@@ -274,6 +338,21 @@ export function SiteNav() {
       >
         <GitHubMark />
       </a>
+      <button
+        ref={toggleRef}
+        type="button"
+        className="nav-toggle"
+        aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+        aria-expanded={mobileOpen}
+        aria-controls="site-nav-menus"
+        onClick={() => {
+          window.clearTimeout(closeTimer.current)
+          setOpen(null)
+          setMobileOpen((current) => !current)
+        }}
+      >
+        <MenuGlyph open={mobileOpen} />
+      </button>
     </header>
   )
 }
